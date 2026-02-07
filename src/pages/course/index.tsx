@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Clock, Users, MoreVertical, Edit2, PlayCircle, EyeOff, Eye, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,119 +80,115 @@ export default function CourseManagement() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex justify-between items-end">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Course Management</h2>
-          <p className="text-slate-500 text-xs font-semibold">Curate and manage your educational content.</p>
+        <div className="space-y-0.5">
+          <h2 className="text-xl font-semibold text-zinc-900">Course Management</h2>
+          <p className="text-zinc-500 text-[13px]">Curate and manage your educational content.</p>
         </div>
         <Button 
           onClick={() => navigate('/dashboard/courses/create')}
-          className="bg-violet-600 hover:bg-violet-700 text-white font-bold px-6 py-5 rounded-xl shadow-lg shadow-violet-600/20 flex items-center gap-2 transition-all active:scale-95"
+          className="gap-1.5"
         >
-          <Plus className="w-4.5 h-4.5" />
-          CREATE COURSE
+          <Plus className="w-4 h-4" />
+          Create Course
         </Button>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {courses.map((course) => (
           <Card 
             key={course.id} 
             onClick={() => navigate(`/dashboard/courses/${course.id}`)}
-            className="group cursor-pointer overflow-hidden border-slate-200/60 bg-white/50 backdrop-blur-sm hover:shadow-xl hover:shadow-violet-200/20 transition-all duration-300 rounded-2xl border"
+            className="group cursor-pointer overflow-hidden p-0"
           >
-            <div className="relative h-48 overflow-hidden">
+            <div className="relative h-40 overflow-hidden">
               <img 
                 src={course.thumbnail} 
                 alt={course.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-60" />
-              <div className="absolute top-4 right-4">
-                <Badge className={
-                  course.status === 'Active' 
-                    ? "bg-emerald-500 text-white border-none shadow-lg shadow-emerald-500/30" 
-                    : course.status === 'Draft'
-                    ? "bg-blue-500 text-white border-none shadow-lg shadow-blue-500/30"
-                    : "bg-slate-500 text-white border-none shadow-lg shadow-slate-500/30"
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-900/70 via-transparent to-transparent" />
+              <div className="absolute top-3 right-3">
+                <Badge variant={
+                  course.status === 'Active' ? "success" : 
+                  course.status === 'Draft' ? "secondary" : "outline"
                 }>
                   {course.status}
                 </Badge>
               </div>
-              <div className="absolute bottom-4 left-4">
-                <p className="text-white font-bold text-xs uppercase tracking-widest bg-white/20 backdrop-blur-md px-3 py-1 rounded-lg">
+              <div className="absolute bottom-3 left-3">
+                <span className="text-white text-[11px] font-medium uppercase tracking-wide bg-white/20 backdrop-blur-sm px-2 py-1 rounded">
                   {course.category}
-                </p>
+                </span>
               </div>
             </div>
 
-            <CardContent className="p-6 space-y-4">
+            <div className="p-4 space-y-3">
               <div className="flex justify-between items-start gap-2">
-                <h3 className="font-bold text-lg text-slate-900 leading-snug group-hover:text-violet-600 transition-colors">
+                <h3 className="font-medium text-[15px] text-zinc-900 leading-snug group-hover:text-zinc-700 transition-colors">
                   {course.title}
                 </h3>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-slate-100">
-                      <MoreVertical className="h-4 w-4 text-slate-400" />
+                    <Button variant="ghost" size="icon-sm" className="h-7 w-7">
+                      <MoreVertical className="h-3.5 w-3.5 text-zinc-400" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="rounded-2xl p-2 border-slate-100 shadow-xl">
-                    <DropdownMenuItem className="rounded-xl flex gap-2 font-bold text-xs p-3">
-                      <Edit2 className="h-4 w-4" /> Edit Course
+                  <DropdownMenuContent align="end" className="rounded-lg p-1 min-w-[140px]">
+                    <DropdownMenuItem className="rounded-md flex gap-2 text-[13px] px-3 py-2">
+                      <Edit2 className="h-3.5 w-3.5" /> Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                       onClick={() => toggleStatus(course.id)}
-                      className="rounded-xl flex gap-2 font-bold text-xs p-3"
+                      className="rounded-md flex gap-2 text-[13px] px-3 py-2"
                     >
-                      {course.status === 'Active' ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      {course.status === 'Active' ? 'Set Inactive' : 'Set Active'}
+                      {course.status === 'Active' ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                      {course.status === 'Active' ? 'Deactivate' : 'Activate'}
                     </DropdownMenuItem>
-                    <div className="h-px bg-slate-100 my-1" />
                     <DropdownMenuItem 
                       onClick={() => deleteCourse(course.id)}
-                      className="rounded-xl flex gap-2 font-bold text-xs p-3 text-red-600 focus:text-red-600 focus:bg-red-50"
+                      className="rounded-md flex gap-2 text-[13px] px-3 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4" /> Delete
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-2">
-                <div className="flex flex-col items-center gap-1">
-                  <PlayCircle className="h-4 w-4 text-violet-500" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{course.lessonsCount} Lessons</span>
+              <div className="flex items-center gap-4 text-[11px] text-zinc-500">
+                <div className="flex items-center gap-1">
+                  <PlayCircle className="h-3.5 w-3.5" />
+                  <span>{course.lessonsCount} lessons</span>
                 </div>
-                <div className="flex flex-col items-center gap-1 border-x border-slate-100 px-4">
-                  <Clock className="h-4 w-4 text-violet-500" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{course.duration}</span>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" />
+                  <span>{course.duration}</span>
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                  <Users className="h-4 w-4 text-violet-500" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{course.studentsCount} Students</span>
+                <div className="flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5" />
+                  <span>{course.studentsCount}</span>
                 </div>
               </div>
 
-              <div className="pt-4 flex items-center justify-between border-t border-slate-100">
-                <p className="text-xl font-bold text-slate-900 tracking-tight">
+              <div className="pt-3 flex items-center justify-between border-t border-zinc-100">
+                <p className="text-lg font-semibold text-zinc-900">
                   ₹{course.price.toLocaleString('en-IN')}
                 </p>
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/dashboard/courses/${course.id}`);
                   }}
-                  className="rounded-xl border-slate-200 text-xs font-bold hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-all"
                 >
-                  VIEW DETAILS
+                  View Details
                 </Button>
               </div>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>

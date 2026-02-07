@@ -10,7 +10,7 @@ export default function DashboardLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
-    <div className="relative min-h-screen bg-slate-50/50 text-slate-900">
+    <div className="relative min-h-screen bg-zinc-50 text-zinc-900">
 
       {/* Mobile menu toggle */}
       <div className="md:hidden fixed top-4 left-4 z-40">
@@ -18,16 +18,16 @@ export default function DashboardLayout() {
           variant="outline" 
           size="icon" 
           onClick={() => setMobileMenuOpen(true)}
-          className="rounded-xl border-slate-200 bg-white/80 backdrop-blur-md shadow-sm"
+          className="rounded-xl border-zinc-200 bg-white/90 backdrop-blur-md shadow-sm hover:bg-white"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5 text-zinc-600" />
         </Button>
       </div>
 
       {/* Mobile menu overlay */}
       {mobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-slate-950/20 backdrop-blur-sm md:hidden" 
+          className="fixed inset-0 z-40 bg-zinc-950/30 backdrop-blur-sm md:hidden" 
           onClick={() => setMobileMenuOpen(false)} 
         />
       )}
@@ -35,7 +35,7 @@ export default function DashboardLayout() {
       {/* Mobile Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[240px] transform bg-white transition-transform duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] md:hidden shadow-2xl",
+          "fixed inset-y-0 left-0 z-50 w-[240px] transform bg-white transition-transform duration-300 ease-out md:hidden shadow-2xl shadow-zinc-900/10",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -44,7 +44,7 @@ export default function DashboardLayout() {
              variant="ghost" 
              size="icon" 
              onClick={() => setMobileMenuOpen(false)} 
-             className="absolute top-6 right-4 z-50 text-slate-400 hover:bg-slate-50 rounded-full"
+             className="absolute top-6 right-4 z-50 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-900 rounded-full"
            >
               <X className="h-5 w-5" />
             </Button>
@@ -55,14 +55,14 @@ export default function DashboardLayout() {
         </div>
       </div>
 
-      {/* Desktop Sidebar Container (Fixed at 72px) */}
+      {/* Desktop Sidebar Container */}
       <div className="fixed inset-y-0 left-0 z-30 hidden md:block w-[72px]">
         <Sidebar isExpanded={false} />
       </div>
 
       {/* Main Content */}
       <div className="min-h-screen flex flex-col md:pl-[72px]">
-        <main className="flex-1 p-8 md:p-12 w-full">
+        <main className="flex-1 p-6 md:p-10 w-full">
           <div className="max-w-[1400px] mx-auto">
             <Outlet />
           </div>

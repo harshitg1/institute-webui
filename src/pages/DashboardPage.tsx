@@ -28,16 +28,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-8 space-y-6">
+    <div className="p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-xl font-semibold text-zinc-900">Dashboard</h1>
+          <p className="text-zinc-500 text-[13px] mt-0.5">
             Welcome back, {user?.email || 'User'}!
           </p>
         </div>
-        <div className="flex gap-3">
-          <Button onClick={() => {}} className="gap-2">
+        <div className="flex gap-2">
+          <Button onClick={() => {}} className="gap-1.5">
             <Plus className="h-4 w-4" />
             Add User
           </Button>
@@ -47,13 +47,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border p-1">
+      <div className="bg-white rounded-lg border border-zinc-200">
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-400" />
           </div>
         ) : isError ? (
-          <div className="p-8 text-center text-red-500">
+          <div className="p-8 text-center text-red-500 text-[13px]">
             Failed to load users. Please try again.
           </div>
         ) : (

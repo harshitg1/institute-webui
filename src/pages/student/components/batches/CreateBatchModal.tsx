@@ -82,103 +82,99 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-      <Card className="w-full max-w-[800px] max-h-[90vh] overflow-hidden rounded-[2.5rem] border-none shadow-2xl bg-white animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-zinc-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+      <Card className="w-full max-w-[720px] max-h-[90vh] overflow-hidden rounded-xl border-zinc-200 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-start justify-between px-10 py-8 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-start justify-between px-8 py-6 border-b border-zinc-100">
           <div>
-             <div className="flex items-center gap-3 mb-2">
-                <Badge variant="outline" className="bg-violet-600 text-white border-none rounded-md px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase">New Architecture</Badge>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protocol Setup</span>
-             </div>
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight uppercase">Initialize New Batch</h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">
-              Configure the logical framework for the new student cohort.
+            <h2 className="text-xl font-semibold text-zinc-900 tracking-tight">Create New Batch</h2>
+            <p className="text-sm text-zinc-500 mt-1">
+              Set up a new training batch with schedule and capacity
             </p>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="rounded-xl h-12 w-12 hover:bg-slate-100 text-slate-400 hover:text-slate-900 transition-all"
+            className="rounded-lg h-10 w-10 hover:bg-zinc-100 text-zinc-400 hover:text-zinc-900"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </Button>
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-200px)] px-10 py-10">
-          <form id="batch-form" onSubmit={handleSubmit} className="space-y-12">
+        <div className="overflow-y-auto max-h-[calc(90vh-180px)] px-8 py-8">
+          <form id="batch-form" onSubmit={handleSubmit} className="space-y-10">
             
             {/* General Information */}
-            <section className="space-y-6">
+            <section className="space-y-5">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                   <BookOpen className="w-5 h-5" />
+                <div className="h-9 w-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
+                   <BookOpen className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">General Metadata</h3>
+                <h3 className="text-sm font-medium text-zinc-900">General Information</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-12">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Batch Identifier</Label>
+                  <Label className="text-xs text-zinc-500">Batch Name</Label>
                   <Input
-                    placeholder="e.g. ALPHA_BETA_2024"
+                    placeholder="e.g. Web Dev Alpha"
                     value={formData.batchName}
                     onChange={(e) => setFormData(prev => ({ ...prev, batchName: e.target.value }))}
-                    className="border-slate-100 bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 placeholder:text-slate-300 focus:bg-white transition-all outline-none border-none ring-1 ring-slate-100 focus:ring-violet-600/20"
+                    className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Logic Category</Label>
+                  <Label className="text-xs text-zinc-500">Course Category</Label>
                   <Select value={formData.courseCategory} onValueChange={(value) => setFormData(prev => ({ ...prev, courseCategory: value }))}>
-                    <SelectTrigger className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20">
-                      <SelectValue placeholder="Select Sector" />
+                    <SelectTrigger className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400">
+                      <SelectValue placeholder="Select category" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                      <SelectItem value="technical" className="text-xs font-bold uppercase tracking-tight">Technical Analysis</SelectItem>
-                      <SelectItem value="advanced" className="text-xs font-bold uppercase tracking-tight">Advanced Derivatives</SelectItem>
-                      <SelectItem value="blockchain" className="text-xs font-bold uppercase tracking-tight">Blockchain Architecture</SelectItem>
+                    <SelectContent className="rounded-lg border-zinc-200">
+                      <SelectItem value="technical" className="text-sm">Technical Analysis</SelectItem>
+                      <SelectItem value="advanced" className="text-sm">Advanced Derivatives</SelectItem>
+                      <SelectItem value="blockchain" className="text-sm">Blockchain</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
             </section>
 
-            {/* Schedule & Timing */}
-            <section className="space-y-6">
+            {/* Schedule */}
+            <section className="space-y-5">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                   <Calendar className="w-5 h-5" />
+                <div className="h-9 w-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
+                   <Calendar className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Chronological Specs</h3>
+                <h3 className="text-sm font-medium text-zinc-900">Schedule</h3>
               </div>
-              <div className="space-y-8 px-2">
+              <div className="space-y-6 pl-12">
                 
                 {/* Date Range */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Initialization Date</Label>
+                    <Label className="text-xs text-zinc-500">Start Date</Label>
                     <Input
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
-                      className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20"
+                      className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Termination Date</Label>
+                    <Label className="text-xs text-zinc-500">End Date</Label>
                     <Input
                       type="date"
                       value={formData.endDate}
                       onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
-                      className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20"
+                      className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400"
                     />
                   </div>
                 </div>
 
                 {/* Days Selection */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Operational Nodes (Days)</p>
+                  <Label className="text-xs text-zinc-500">Days</Label>
                   <div className="flex flex-wrap gap-2">
                     {DAYS_OF_WEEK.map(day => (
                       <button
@@ -186,10 +182,10 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
                         type="button"
                         onClick={() => toggleDay(day)}
                         className={cn(
-                          "h-10 px-5 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all",
+                          "h-9 px-4 rounded-lg text-xs font-medium transition-all",
                           formData.scheduleDays.includes(day)
-                            ? 'bg-slate-900 text-white shadow-lg shadow-slate-200'
-                            : 'bg-slate-50 text-slate-400 border border-slate-100 hover:border-slate-300'
+                            ? 'bg-zinc-900 text-white'
+                            : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
                         )}
                       >
                         {day}
@@ -199,23 +195,23 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
                 </div>
 
                 {/* Time Selection */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Active Window Start</Label>
+                    <Label className="text-xs text-zinc-500">Start Time</Label>
                     <Input
                       type="time"
                       value={formData.startTime}
                       onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
-                      className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20"
+                      className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Active Window End</Label>
+                    <Label className="text-xs text-zinc-500">End Time</Label>
                     <Input
                       type="time"
                       value={formData.endTime}
                       onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
-                      className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20"
+                      className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400"
                     />
                   </div>
                 </div>
@@ -223,29 +219,29 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
             </section>
 
             {/* Staffing & Capacity */}
-            <section className="space-y-6">
+            <section className="space-y-5">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-slate-900 text-white flex items-center justify-center">
-                   <Users className="w-5 h-5" />
+                <div className="h-9 w-9 rounded-lg bg-zinc-900 text-white flex items-center justify-center">
+                   <Users className="w-4 h-4" />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Protocol Oversight</h3>
+                <h3 className="text-sm font-medium text-zinc-900">Capacity</h3>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-12">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Lead Instructor</Label>
+                  <Label className="text-xs text-zinc-500">Instructor</Label>
                   <Select value={formData.instructor} onValueChange={(value) => setFormData(prev => ({ ...prev, instructor: value }))}>
-                    <SelectTrigger className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20">
-                      <SelectValue placeholder="Locating Expert..." />
+                    <SelectTrigger className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400">
+                      <SelectValue placeholder="Select instructor" />
                     </SelectTrigger>
-                    <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                      <SelectItem value="1" className="text-xs font-bold uppercase tracking-tight">Dr. Sarah Johnson</SelectItem>
-                      <SelectItem value="2" className="text-xs font-bold uppercase tracking-tight">Prof. Michael Chen</SelectItem>
-                      <SelectItem value="3" className="text-xs font-bold uppercase tracking-tight">Dr. Elena Rodriguez</SelectItem>
+                    <SelectContent className="rounded-lg border-zinc-200">
+                      <SelectItem value="1" className="text-sm">Dr. Sarah Johnson</SelectItem>
+                      <SelectItem value="2" className="text-sm">Prof. Michael Chen</SelectItem>
+                      <SelectItem value="3" className="text-sm">Dr. Elena Rodriguez</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Max Node Occupancy</Label>
+                  <Label className="text-xs text-zinc-500">Max Capacity</Label>
                   <div className="relative">
                     <Input
                       type="number"
@@ -253,9 +249,9 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
                       min="1"
                       value={formData.maxCapacity}
                       onChange={(e) => setFormData(prev => ({ ...prev, maxCapacity: e.target.value }))}
-                      className="border-none bg-slate-50/50 rounded-xl h-12 px-5 font-bold text-slate-900 ring-1 ring-slate-100 focus:ring-violet-600/20 pr-16"
+                      className="border-zinc-200 bg-white rounded-lg h-11 text-sm focus:border-zinc-400 focus:ring-zinc-400 pr-16"
                     />
-                    <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 uppercase">UNITS</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-zinc-400">students</span>
                   </div>
                 </div>
               </div>
@@ -264,36 +260,30 @@ export function CreateBatchModal({ isOpen, onClose, onSubmit }: {
         </div>
 
         {/* Footer */}
-        <div className="px-10 py-8 border-t border-slate-100 flex items-center justify-end gap-4 bg-slate-50/50">
+        <div className="px-8 py-5 border-t border-zinc-100 flex items-center justify-end gap-3">
           <Button
             variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="rounded-xl h-12 px-8 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
+            className="rounded-lg h-10 px-5 text-sm text-zinc-500 hover:text-zinc-900"
           >
-            Abort Setup
+            Cancel
           </Button>
           <Button
             form="batch-form"
             type="submit"
             disabled={loading}
-            className="rounded-xl h-12 px-8 bg-slate-900 text-white text-xs font-bold uppercase tracking-widest shadow-xl shadow-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3 border-none"
+            className="rounded-lg h-10 px-6 bg-zinc-900 text-white text-sm font-medium hover:bg-zinc-800 flex items-center gap-2"
           >
             {loading ? (
               <div className="h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             ) : (
               <CheckCircle className="w-4 h-4" />
             )}
-            {loading ? 'Processing...' : 'Confirm Initialization'}
+            {loading ? 'Creating...' : 'Create Batch'}
           </Button>
         </div>
       </Card>
     </div>
   );
 }
-
-const Badge = ({ children, className }: any) => (
-    <div className={cn("inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", className)}>
-        {children}
-    </div>
-)

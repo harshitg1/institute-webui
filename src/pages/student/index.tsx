@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Users, Layers, ShieldCheck } from "lucide-react";
+import { Plus, Users, Layers } from "lucide-react";
 import { StudentTable } from "./components/users/table";
 import AddStudentModal, { type StudentFormData } from "./components/users/AddStudentModal";
 import { Button } from "@/components/ui/button";
@@ -70,44 +70,44 @@ export default function Students() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="max-w-7xl mx-auto space-y-5 animate-in fade-in duration-300">
 
-      <Tabs defaultValue="batches" className="w-full space-y-6">
+      <Tabs defaultValue="batches" className="w-full space-y-5">
         <div className="flex justify-center sticky top-4 z-30">
-          <TabsList className="bg-white/90 backdrop-blur-xl p-1 gap-1 h-auto rounded-xl border border-slate-200 shadow-sm inline-flex items-center">
+          <TabsList className="bg-white p-0.5 gap-0.5 h-auto rounded-md border border-zinc-200 inline-flex items-center">
             <TabsTrigger 
               value="batches" 
-              className="rounded-lg px-5 py-2 font-bold text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-900 data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md border border-transparent transition-all duration-200 gap-2"
+              className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
             >
               <Layers className="w-3.5 h-3.5" />
-              Batch Protocols
+              Batches
             </TabsTrigger>
             <TabsTrigger 
               value="users" 
-              className="rounded-lg px-5 py-2 font-bold text-[10px] uppercase tracking-wider text-slate-500 hover:text-slate-900 data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-md border border-transparent transition-all duration-200 gap-2"
+              className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
             >
               <Users className="w-3.5 h-3.5" />
-              User Identities
+              Students
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="batches" className="mt-0 outline-none animate-in slide-in-from-bottom-2 duration-300">
+        <TabsContent value="batches" className="mt-0 outline-none animate-in fade-in duration-200">
           <BatchManagement />
         </TabsContent>
 
-        <TabsContent value="users" className="mt-0 outline-none animate-in slide-in-from-bottom-2 duration-300 space-y-8">
-          <div className="flex justify-between items-end mb-4">
+        <TabsContent value="users" className="mt-0 outline-none animate-in fade-in duration-200 space-y-5">
+          <div className="flex justify-between items-center">
              <div>
-               <h3 className="text-xl font-bold text-slate-900 uppercase tracking-tight">Active Identities</h3>
-               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-1">Monitoring access levels and performance metrics.</p>
+               <h2 className="text-xl font-semibold text-zinc-900">Students</h2>
+               <p className="text-[13px] text-zinc-500 mt-0.5">Manage student enrollments and access</p>
              </div>
              <Button 
                 onClick={() => setIsModalOpen(true)}
-                className="bg-violet-600 hover:bg-violet-700 text-white font-bold h-11 px-6 rounded-xl shadow-xl shadow-violet-200 transition-all active:scale-95 border-none text-[10px] tracking-widest uppercase gap-2.5"
+                className="gap-1.5"
                 >
                 <Plus className="w-4 h-4" />
-                Enroll Identity
+                Add Student
              </Button>
           </div>
           

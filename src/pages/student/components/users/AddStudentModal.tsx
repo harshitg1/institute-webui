@@ -175,40 +175,40 @@ export default function AddStudentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border border-white/30 dark:border-white/10 shadow-2xl flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
+      <div className="w-full max-w-[640px] max-h-[85vh] overflow-hidden rounded-lg bg-white border border-zinc-200 shadow-xl flex flex-col">
         
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 p-8 border-b border-gray-200/50 dark:border-gray-700/50">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-slate-900 dark:text-white text-3xl font-bold leading-tight">
+        <div className="flex items-start justify-between gap-3 px-6 py-5 border-b border-zinc-100">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-zinc-900 text-lg font-semibold">
               Add New Student
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm font-normal">
-              Enter the details to enroll a new member to the institute.
+            <p className="text-zinc-500 text-[13px]">
+              Enter the details to enroll a new member.
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors p-2"
+            className="text-zinc-400 hover:text-zinc-600 transition-colors p-1 -mr-1"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Content */}
-        <div className="p-8 space-y-8 overflow-y-auto flex-1">
+        <div className="px-6 py-5 space-y-6 overflow-y-auto flex-1">
           
           {/* Personal Information Section */}
           <section>
-            <h3 className="text-purple-600 dark:text-purple-400 text-xs font-bold tracking-widest uppercase mb-6">
+            <h3 className="text-zinc-500 text-[11px] font-medium tracking-wide uppercase mb-4">
               Personal Information
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
               {/* Profile Picture Upload */}
               <div className="flex flex-col">
-                <Label className="text-slate-900 dark:text-gray-200 text-base font-medium mb-3">
+                <Label className="text-zinc-700 text-[13px] font-medium mb-2">
                   Profile Picture
                 </Label>
                 <input
@@ -220,48 +220,37 @@ export default function AddStudentModal({
                 />
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-col items-center gap-4 rounded-xl border-2 border-dashed border-purple-300 dark:border-gray-700 px-4 py-8 bg-purple-50 dark:bg-purple-950/20 cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-950/40 transition-colors"
+                  className="flex flex-col items-center gap-3 rounded-md border border-dashed border-zinc-300 px-4 py-5 bg-zinc-50/50 cursor-pointer hover:bg-zinc-100/50 transition-colors"
                 >
                   {previewUrl ? (
                     <img
                       src={previewUrl}
                       alt="Preview"
-                      className="w-16 h-16 rounded-full object-cover"
+                      className="w-12 h-12 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-full bg-purple-200 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-400">
-                      <Upload className="w-8 h-8" />
+                    <div className="w-12 h-12 rounded-full bg-zinc-200 flex items-center justify-center text-zinc-400">
+                      <Upload className="w-5 h-5" />
                     </div>
                   )}
-                  <div className="flex flex-col items-center gap-1 text-center">
-                    <p className="text-slate-900 dark:text-gray-200 text-sm font-bold">
+                  <div className="flex flex-col items-center gap-0.5 text-center">
+                    <p className="text-zinc-700 text-[13px] font-medium">
                       {previewUrl ? 'Change Photo' : 'Upload Photo'}
                     </p>
-                    <p className="text-gray-500 dark:text-gray-400 text-xs">
-                      Drag or click to browse
+                    <p className="text-zinc-400 text-[11px]">
+                      Click to browse
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      fileInputRef.current?.click();
-                    }}
-                  >
-                    Select File
-                  </Button>
                 </div>
                 {errors.profilePicture && (
-                  <p className="text-xs text-red-500 font-medium mt-2">{errors.profilePicture}</p>
+                  <p className="text-[11px] text-red-500 mt-1.5">{errors.profilePicture}</p>
                 )}
               </div>
 
               {/* Text Fields */}
               <div className="space-y-4">
                 <div className="flex flex-col">
-                  <Label htmlFor="fullName" className="text-slate-900 dark:text-gray-200 text-base font-medium mb-2">
+                  <Label htmlFor="fullName" className="text-zinc-700 text-[13px] font-medium mb-1.5">
                     Full Name
                   </Label>
                   <Input
@@ -270,15 +259,14 @@ export default function AddStudentModal({
                     placeholder="Enter student's full name"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="bg-white/50 dark:bg-gray-800 border-purple-300 dark:border-gray-700 rounded-xl h-14 focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 transition-all"
                   />
                   {errors.fullName && (
-                    <p className="text-xs text-red-500 font-medium mt-1">{errors.fullName}</p>
+                    <p className="text-[11px] text-red-500 mt-1">{errors.fullName}</p>
                   )}
                 </div>
 
                 <div className="flex flex-col">
-                  <Label htmlFor="email" className="text-slate-900 dark:text-gray-200 text-base font-medium mb-2">
+                  <Label htmlFor="email" className="text-zinc-700 text-[13px] font-medium mb-1.5">
                     Email Address
                   </Label>
                   <Input
@@ -288,15 +276,14 @@ export default function AddStudentModal({
                     placeholder="student@email.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="bg-white/50 dark:bg-gray-800 border-purple-300 dark:border-gray-700 rounded-xl h-14 focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 transition-all"
                   />
                   {errors.email && (
-                    <p className="text-xs text-red-500 font-medium mt-1">{errors.email}</p>
+                    <p className="text-[11px] text-red-500 mt-1">{errors.email}</p>
                   )}
                 </div>
 
                 <div className="flex flex-col">
-                  <Label htmlFor="phoneNumber" className="text-slate-900 dark:text-gray-200 text-base font-medium mb-2">
+                  <Label htmlFor="phoneNumber" className="text-zinc-700 text-[13px] font-medium mb-1.5">
                     Phone Number
                   </Label>
                   <Input
@@ -306,10 +293,9 @@ export default function AddStudentModal({
                     placeholder="+1 (555) 000-0000"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    className="bg-white/50 dark:bg-gray-800 border-purple-300 dark:border-gray-700 rounded-xl h-14 focus:ring-2 focus:ring-purple-600/20 focus:border-purple-600 transition-all"
                   />
                   {errors.phoneNumber && (
-                    <p className="text-xs text-red-500 font-medium mt-1">{errors.phoneNumber}</p>
+                    <p className="text-[11px] text-red-500 mt-1">{errors.phoneNumber}</p>
                   )}
                 </div>
               </div>
@@ -318,14 +304,14 @@ export default function AddStudentModal({
 
           {/* Course & Access Level Section */}
           <section>
-            <h3 className="text-purple-600 dark:text-purple-400 text-xs font-bold tracking-widest uppercase mb-6">
+            <h3 className="text-zinc-500 text-[11px] font-medium tracking-wide uppercase mb-4">
               Course & Access Level
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
               {/* Course Selection */}
               <div className="flex flex-col">
-                <Label className="text-slate-900 dark:text-gray-200 text-base font-medium mb-2">
+                <Label className="text-zinc-700 text-[13px] font-medium mb-1.5">
                   Course Selection
                 </Label>
                 <Select value={formData.course} onValueChange={(value) => {
@@ -334,7 +320,7 @@ export default function AddStudentModal({
                     setErrors(prev => ({ ...prev, course: undefined }));
                   }
                 }}>
-                  <SelectTrigger className="bg-white/50 dark:bg-gray-800 border-purple-300 dark:border-gray-700 rounded-xl h-14 focus:ring-2 focus:ring-purple-600/20">
+                  <SelectTrigger className="h-9">
                     <SelectValue placeholder="Choose a course" />
                   </SelectTrigger>
                   <SelectContent>
@@ -346,23 +332,23 @@ export default function AddStudentModal({
                   </SelectContent>
                 </Select>
                 {errors.course && (
-                  <p className="text-xs text-red-500 font-medium mt-1">{errors.course}</p>
+                  <p className="text-[11px] text-red-500 mt-1">{errors.course}</p>
                 )}
               </div>
 
               {/* Access Level Toggle */}
               <div className="flex flex-col">
-                <Label className="text-slate-900 dark:text-gray-200 text-base font-medium mb-2">
+                <Label className="text-zinc-700 text-[13px] font-medium mb-1.5">
                   Access Level
                 </Label>
-                <div className="flex gap-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl h-14 border border-gray-200 dark:border-gray-700">
+                <div className="flex gap-1 bg-zinc-100 p-1 rounded-md h-9">
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, accessLevel: 'standard' }))}
-                    className={`flex-1 rounded-lg font-bold text-sm transition-all ${
+                    className={`flex-1 rounded text-[13px] font-medium transition-all ${
                       formData.accessLevel === 'standard'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-white'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ? 'bg-white shadow-sm text-zinc-900'
+                        : 'text-zinc-500 hover:text-zinc-700'
                     }`}
                   >
                     Standard
@@ -370,10 +356,10 @@ export default function AddStudentModal({
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, accessLevel: 'premium' }))}
-                    className={`flex-1 rounded-lg font-bold text-sm transition-all ${
+                    className={`flex-1 rounded text-[13px] font-medium transition-all ${
                       formData.accessLevel === 'premium'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm text-purple-600 dark:text-white'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ? 'bg-white shadow-sm text-zinc-900'
+                        : 'text-zinc-500 hover:text-zinc-700'
                     }`}
                   >
                     Premium
@@ -385,21 +371,19 @@ export default function AddStudentModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-8 border-t border-gray-200/50 dark:border-gray-700/50 flex items-center justify-end gap-4 bg-white/30 dark:bg-gray-900/30">
+        <div className="px-6 py-4 border-t border-zinc-100 flex items-center justify-end gap-3">
           <Button
             variant="ghost"
             onClick={handleClose}
             disabled={loading}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 font-bold text-sm"
           >
-            CANCEL
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-gradient-to-r from-purple-600 to-teal-600 hover:opacity-90 text-white font-bold text-sm px-8 h-12 rounded-lg shadow-lg shadow-purple-600/30 hover:shadow-purple-600/50 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? 'ADDING...' : 'ADD STUDENT'}
+            {loading ? 'Adding...' : 'Add Student'}
           </Button>
         </div>
       </div>

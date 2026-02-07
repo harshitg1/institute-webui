@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Plus, ChevronDown, Filter } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+
 import { BatchCard, type Batch } from './BatchCard';
 import { CreateBatchModal, type BatchFormData } from './CreateBatchModal';
+import { BatchAttendance } from './BatchAttendance';
 
 const MOCK_BATCHES: Batch[] = [
   {
@@ -50,8 +50,24 @@ const MOCK_BATCHES: Batch[] = [
 
 export function BatchManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [batches, setBatches] = useState<Batch[]>(MOCK_BATCHES);
+  
+  const [viewMode, setViewMode] = useState<'list' | 'attendance'>('list');
+  const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
+
+  const handleActionClick = (batch: Batch) => {
+    if (batch.status === 'active') {
+      setSelectedBatch(batch);
+      setViewMode('attendance');
+    } else {
+      console.log('Verify roster for:', batch.name);
+    }
+  };
+
+  const handleBack = () => {
+    setViewMode('list');
+    setSelectedBatch(null);
+  };
 
   const handleCreateBatch = (data: BatchFormData) => {
     const newBatch: Batch = {
@@ -70,54 +86,61 @@ export function BatchManagement() {
     setBatches(prev => [newBatch, ...prev]);
   };
 
+  if (viewMode === 'attendance' && selectedBatch) {
+    return <BatchAttendance batch={selectedBatch} onBack={handleBack} />;
+  }
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header Info */}
-      <div className="flex justify-between md:items-end  p-6">
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-900 tracking-tight">Batches</h1>
+          <p className="text-sm text-zinc-500 mt-1">Manage your training batches and attendance</p>
+        </div>
         <Button
           onClick={() => setIsModalOpen(true)}
-          className="relative z-10 bg-slate-900 hover:bg-black text-white px-6 h-11 rounded-xl shadow-lg shadow-slate-200 transition-all hover:scale-[1.02] active:scale-[0.98] border-none font-bold text-[10px] uppercase tracking-widest gap-2"
+          className="bg-zinc-900 hover:bg-zinc-800 text-white px-5 h-10 rounded-lg font-medium text-xs gap-2"
         >
           <Plus className="w-4 h-4" />
-          Initialize New Batch
+          New Batch
         </Button>
       </div>
 
-      {/* Control Bar */}
-    
-
       {/* Batch Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {batches.map(batch => (
-          <BatchCard key={batch.id} batch={batch} />
+          <BatchCard 
+            key={batch.id} 
+            batch={batch} 
+            onActionClick={handleActionClick}
+          />
         ))}
         
-        {/* Placeholder for Quick Add */}
+        {/* Quick Add Placeholder */}
         <div 
           onClick={() => setIsModalOpen(true)}
-          className="group min-h-[400px] border-2 border-dashed border-slate-100 rounded-2xl p-8 flex flex-col items-center justify-center gap-6 text-slate-300 hover:border-violet-200 hover:bg-violet-50/30 transition-all cursor-pointer"
+          className="group min-h-[320px] border border-dashed border-zinc-200 rounded-lg p-6 flex flex-col items-center justify-center gap-4 text-zinc-400 hover:border-zinc-400 hover:bg-zinc-50 transition-all cursor-pointer"
         >
-          <div className="h-20 w-20 rounded-3xl bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:scale-110 group-hover:rotate-6 transition-all shadow-sm group-hover:shadow-xl group-hover:shadow-violet-200/50">
-             <Plus className="w-10 h-10 group-hover:text-violet-600" />
+          <div className="h-14 w-14 rounded-xl bg-zinc-100 flex items-center justify-center group-hover:bg-zinc-200 transition-all">
+             <Plus className="w-6 h-6 group-hover:text-zinc-600" />
           </div>
-          <div className="text-center space-y-2">
-            <span className="block text-xs font-bold uppercase tracking-widest group-hover:text-violet-600">Initialize Node</span>
-            <p className="text-[10px] font-semibold text-slate-400 max-w-[160px]">Create an empty placeholder in the structural hierarchy.</p>
+          <div className="text-center space-y-1">
+            <span className="block text-xs font-medium group-hover:text-zinc-600">Add Batch</span>
+            <p className="text-[10px] text-zinc-400 max-w-[140px]">Create a new training batch</p>
           </div>
         </div>
       </div>
 
-      {/* Pagination Protocol */}
-      <div className="flex items-center justify-between pt-10 border-t border-slate-100">
-        <div>
-           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Visibility: {batches.length} of 12 Operational Nodes</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="rounded-xl h-10 border-slate-100 px-6 font-bold text-[10px] uppercase tracking-widest text-slate-400 transition-all disabled:opacity-30" disabled>
-            Previous Cycle
+      {/* Pagination */}
+      <div className="flex items-center justify-between pt-8 border-t border-zinc-100">
+        <p className="text-xs text-zinc-500">Showing {batches.length} batches</p>
+        <div className="flex gap-2">
+          <Button variant="outline" className="rounded-lg h-9 border-zinc-200 px-4 text-xs text-zinc-500 disabled:opacity-40" disabled>
+            Previous
           </Button>
-          <Button variant="outline" className="rounded-xl h-10 border-slate-100 px-6 font-bold text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all">
-            Next Cycle
+          <Button variant="outline" className="rounded-lg h-9 border-zinc-200 px-4 text-xs text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100">
+            Next
           </Button>
         </div>
       </div>
