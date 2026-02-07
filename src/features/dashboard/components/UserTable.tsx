@@ -29,8 +29,7 @@ interface UserTableProps {
 
 export function UserTable({ data, onEdit, onDelete }: UserTableProps) {
   return (
-    <div className="rounded-lg border border-zinc-200 overflow-hidden">
-      <Table>
+    <Table>
         <TableHeader className="bg-zinc-50/80">
           <TableRow className="hover:bg-transparent border-zinc-100">
             <TableHead className="w-[40px]">
@@ -114,6 +113,5 @@ export function UserTable({ data, onEdit, onDelete }: UserTableProps) {
           )}
         </TableBody>
       </Table>
-    </div>
   )
 }

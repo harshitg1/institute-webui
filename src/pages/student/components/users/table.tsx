@@ -40,8 +40,7 @@ export function StudentTable({ students }: StudentTableProps) {
   };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white overflow-hidden">
-      <Table>
+    <Table>
         <TableHeader className="bg-zinc-50/80">
           <TableRow className="hover:bg-transparent border-zinc-100">
             <TableHead>Student</TableHead>
@@ -118,6 +117,5 @@ export function StudentTable({ students }: StudentTableProps) {
           )}
         </TableBody>
       </Table>
-    </div>
   );
 }

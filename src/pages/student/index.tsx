@@ -5,6 +5,7 @@ import AddStudentModal, { type StudentFormData } from "./components/users/AddStu
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BatchManagement } from "./components/batches/BatchManagement";
+import { PageHeader, PageContainer, PageContent } from "@/components/ui/page-header";
 
 export type StudentStatus = 'Active' | 'Warning' | 'Suspended';
 
@@ -70,48 +71,56 @@ export default function Students() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 animate-in fade-in duration-300">
+    <PageContainer>
+      {/* Main Page Header */}
+      <PageHeader 
+        title="Student Management" 
+        description="Manage batches, enrollments and student access"
+      />
 
-      <Tabs defaultValue="batches" className="w-full space-y-5">
-        <div className="flex justify-center sticky top-4 z-30">
-          <TabsList className="bg-white p-0.5 gap-0.5 h-auto rounded-md border border-zinc-200 inline-flex items-center">
-            <TabsTrigger 
-              value="batches" 
-              className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
-            >
-              <Layers className="w-3.5 h-3.5" />
-              Batches
-            </TabsTrigger>
-            <TabsTrigger 
-              value="users" 
-              className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
-            >
-              <Users className="w-3.5 h-3.5" />
-              Students
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Tabs Section */}
+      <Tabs defaultValue="batches" className="flex flex-col flex-1 min-h-0 mt-4">
+        {/* Tab Navigation */}
+        <TabsList className="bg-white p-0.5 gap-0.5 h-auto rounded-md border border-zinc-200 w-fit">
+          <TabsTrigger 
+            value="batches" 
+            className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            Batches
+          </TabsTrigger>
+          <TabsTrigger 
+            value="users" 
+            className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
+          >
+            <Users className="w-3.5 h-3.5" />
+            Students
+          </TabsTrigger>
+        </TabsList>
 
-        <TabsContent value="batches" className="mt-0 outline-none animate-in fade-in duration-200">
+        {/* Batches Tab */}
+        <TabsContent value="batches" className="flex-1 min-h-0 mt-4 outline-none">
           <BatchManagement />
         </TabsContent>
 
-        <TabsContent value="users" className="mt-0 outline-none animate-in fade-in duration-200 space-y-5">
-          <div className="flex justify-between items-center">
-             <div>
-               <h2 className="text-xl font-semibold text-zinc-900">Students</h2>
-               <p className="text-[13px] text-zinc-500 mt-0.5">Manage student enrollments and access</p>
-             </div>
-             <Button 
-                onClick={() => setIsModalOpen(true)}
-                className="gap-1.5"
-                >
-                <Plus className="w-4 h-4" />
-                Add Student
-             </Button>
+        {/* Students Tab */}
+        <TabsContent value="users" className="flex-1 min-h-0 mt-4 outline-none flex flex-col">
+          <div className="flex items-center justify-between pb-4">
+            <div>
+              <h2 className="text-[15px] font-medium text-zinc-900">Students</h2>
+              <p className="text-zinc-500 text-[12px] mt-0.5">View and manage individual students</p>
+            </div>
+            <Button onClick={() => setIsModalOpen(true)} className="gap-1.5">
+              <Plus className="w-4 h-4" />
+              Add Student
+            </Button>
           </div>
           
-          <StudentTable students={students} />
+          <PageContent>
+            <div className="h-full overflow-y-auto rounded-lg border border-zinc-200 bg-white">
+              <StudentTable students={students} />
+            </div>
+          </PageContent>
 
           <AddStudentModal 
             isOpen={isModalOpen} 
@@ -120,6 +129,6 @@ export default function Students() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }

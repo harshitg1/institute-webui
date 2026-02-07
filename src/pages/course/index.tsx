@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PageHeader, PageContainer, PageContent } from "@/components/ui/page-header";
 
 export type CourseStatus = 'Active' | 'Draft' | 'Inactive';
 
@@ -80,13 +81,11 @@ export default function CourseManagement() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-end">
-        <div className="space-y-0.5">
-          <h2 className="text-xl font-semibold text-zinc-900">Course Management</h2>
-          <p className="text-zinc-500 text-[13px]">Curate and manage your educational content.</p>
-        </div>
+    <PageContainer>
+      <PageHeader 
+        title="Course Management" 
+        description="Curate and manage your educational content"
+      >
         <Button 
           onClick={() => navigate('/dashboard/courses/create')}
           className="gap-1.5"
@@ -94,10 +93,11 @@ export default function CourseManagement() {
           <Plus className="w-4 h-4" />
           Create Course
         </Button>
-      </div>
+      </PageHeader>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <PageContent>
+        <div className="h-full overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {courses.map((course) => (
           <Card 
             key={course.id} 
@@ -191,7 +191,9 @@ export default function CourseManagement() {
             </div>
           </Card>
         ))}
-      </div>
-    </div>
+          </div>
+        </div>
+      </PageContent>
+    </PageContainer>
   );
 }

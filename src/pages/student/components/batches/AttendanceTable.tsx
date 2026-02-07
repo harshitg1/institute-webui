@@ -89,7 +89,8 @@ export function AttendanceTable({ students, attendance, onStatusChange }: Attend
     <div className="space-y-4">
       {/* Table */}
       <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-        <Table>
+        <div className="max-h-[480px] overflow-y-auto">
+          <Table>
           <TableHeader className="bg-zinc-50">
             <TableRow className="hover:bg-transparent border-zinc-200">
               <TableHead className="w-10 pl-3">#</TableHead>
@@ -193,6 +194,7 @@ export function AttendanceTable({ students, attendance, onStatusChange }: Attend
             )}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       {/* Pagination */}
