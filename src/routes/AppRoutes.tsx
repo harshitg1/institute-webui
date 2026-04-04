@@ -15,7 +15,6 @@ const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
 const DashboardLayout = lazy(() => import('@/features/dashboard/layouts/DashboardLayout'))
 const DashboardHome = lazy(() => import('@/features/dashboard/pages/DashboardHome'))
 const DashboardLearn = lazy(() => import('@/features/dashboard/pages/DashboardLearn'))
-const DashboardUsers = lazy(() => import('@/features/dashboard/pages/DashboardUsers'))
 const CoursePlayer = lazy(() => import('@/features/dashboard/pages/CoursePlayer'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 const DashboardRedirect = lazy(() => import('@/features/dashboard/pages/DashboardRedirect'))
@@ -24,6 +23,9 @@ const CourseDetailPage = lazy(() => import('@/pages/course/CourseDetailPage'))
 const CreateCoursePage = lazy(() => import('@/pages/course/CreateCoursePage'))
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage'))
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'))
+
+const SuperAdminDashboard = lazy(() => import('@/features/dashboard/pages/SuperAdminDashboard'))
+const SuperAdminOrgs = lazy(() => import('@/features/dashboard/pages/SuperAdminOrgs'))
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-screen">
@@ -53,12 +55,12 @@ export default function AppRoutes() {
         {/* Super Admin Routes */}
         <Route element={<RoleRoute allowedRoles={[UserRole.SUPER_ADMIN]} />}>
           <Route path="/dashboard/super-admin" element={<DashboardLayout />}>
-             <Route index element={<DashboardHome />} />
-             <Route path="orgs" element={<DashboardHome />} /> {/* Placeholder */}
+             <Route index element={<SuperAdminDashboard />} />
+             <Route path="orgs" element={<SuperAdminOrgs />} />
           </Route>
         </Route>
 
-        <Route element={<RoleRoute allowedRoles={[UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN, UserRole.TUTOR]} />}>
+        <Route element={<RoleRoute allowedRoles={[UserRole.ORG_ADMIN, UserRole.TUTOR]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard/admin" element={<DashboardHome />} />
             <Route path="/dashboard/users" element={<Students />} />
@@ -84,7 +86,7 @@ export default function AppRoutes() {
           </Route>
         </Route>
 
-        <Route element={<RoleRoute allowedRoles={[UserRole.STUDENT, UserRole.TUTOR, UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN]} />}>
+        <Route element={<RoleRoute allowedRoles={[UserRole.STUDENT, UserRole.TUTOR, UserRole.ORG_ADMIN]} />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard/student/learn/course/:courseId/lesson/:lessonId" element={<CoursePlayer />} />
           </Route>

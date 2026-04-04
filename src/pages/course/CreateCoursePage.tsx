@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Plus, 
-  Trash2, 
-  Save, 
-  Image as ImageIcon,
-  MonitorPlay,
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Save,
   Layout,
-  Globe,
   Settings2,
   ListVideo,
-  ChevronRight
+  GripVertical,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Upload,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,13 +27,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-// import {
-//   Accordion,
-//   AccordionContent,
-//   AccordionItem,
-//   AccordionTrigger,
-// } from "@/components/ui/accordion";
+import { useCreateCourseMutation } from '@/api/apiSlice';
 
 interface Lesson {
   id: string;
@@ -45,416 +43,662 @@ interface Module {
   id: string;
   title: string;
   lessons: Lesson[];
+  expanded: boolean;
 }
 
 export default function CreateCoursePage() {
   const navigate = useNavigate();
+  const [createCourse, { isLoading: isPublishing }] = useCreateCourseMutation();
   const [activeTab, setActiveTab] = useState<'basics' | 'curriculum' | 'settings'>('basics');
-  
-  // Basics State
+
   const [basics, setBasics] = useState({
     title: '',
     category: '',
     price: '',
     thumbnail: '',
     description: '',
-    level: 'Beginner'
+    level: 'Beginner',
   });
 
-  // Curriculum State
   const [modules, setModules] = useState<Module[]>([
-    { 
-      id: 'm1', 
-      title: 'Module 1: Getting Started', 
+    {
+      id: 'm1',
+      title: 'Module 1: Getting Started',
+      expanded: true,
       lessons: [
-        { id: 'l1', title: 'Introduction to Strategy', duration: '12:00', videoUrl: 'https://vimeo.com/...', description: 'Overview of what we will cover.' }
-      ] 
-    }
+        { id: 'l1', title: 'Introduction to the Course', duration: '12:00', videoUrl: '', description: '' },
+      ],
+    },
   ]);
 
   const addModule = () => {
     const newModule: Module = {
       id: `m${Date.now()}`,
       title: `Module ${modules.length + 1}: New Module`,
-      lessons: []
+      expanded: true,
+      lessons: [],
     };
     setModules([...modules, newModule]);
   };
 
   const addLesson = (moduleId: string) => {
-    setModules(prev => prev.map(m => {
-      if (m.id === moduleId) {
-        return {
-          ...m,
-          lessons: [...m.lessons, { 
-            id: `l${Date.now()}`, 
-            title: 'New Lesson', 
-            duration: '10:00',
-            videoUrl: '',
-            description: ''
-          }]
-        };
-      }
-      return m;
-    }));
+    setModules((prev) =>
+      prev.map((m) => {
+        if (m.id === moduleId) {
+          return {
+            ...m,
+            expanded: true,
+            lessons: [
+              ...m.lessons,
+              {
+                id: `l${Date.now()}`,
+                title: 'New Lesson',
+                duration: '10:00',
+                videoUrl: '',
+                description: '',
+              },
+            ],
+          };
+        }
+        return m;
+      })
+    );
   };
 
   const updateModuleTitle = (id: string, title: string) => {
-    setModules(prev => prev.map(m => m.id === id ? { ...m, title } : m));
+    setModules((prev) => prev.map((m) => (m.id === id ? { ...m, title } : m)));
+  };
+
+  const toggleModuleExpand = (id: string) => {
+    setModules((prev) => prev.map((m) => (m.id === id ? { ...m, expanded: !m.expanded } : m)));
   };
 
   const updateLesson = (moduleId: string, lessonId: string, updates: Partial<Lesson>) => {
-    setModules(prev => prev.map(m => {
-      if (m.id === moduleId) {
-        return {
-          ...m,
-          lessons: m.lessons.map(l => l.id === lessonId ? { ...l, ...updates } : l)
-        };
-      }
-      return m;
-    }));
+    setModules((prev) =>
+      prev.map((m) => {
+        if (m.id === moduleId) {
+          return {
+            ...m,
+            lessons: m.lessons.map((l) => (l.id === lessonId ? { ...l, ...updates } : l)),
+          };
+        }
+        return m;
+      })
+    );
   };
 
   const deleteLesson = (moduleId: string, lessonId: string) => {
-    setModules(prev => prev.map(m => {
-      if (m.id === moduleId) {
-        return {
-          ...m,
-          lessons: m.lessons.filter(l => l.id !== lessonId)
-        };
-      }
-      return m;
-    }));
+    setModules((prev) =>
+      prev.map((m) => {
+        if (m.id === moduleId) {
+          return { ...m, lessons: m.lessons.filter((l) => l.id !== lessonId) };
+        }
+        return m;
+      })
+    );
   };
 
   const deleteModule = (moduleId: string) => {
-    setModules(prev => prev.filter(m => m.id !== moduleId));
+    setModules((prev) => prev.filter((m) => m.id !== moduleId));
   };
 
   const handleSave = async () => {
-    console.log('Publishing Course:', { basics, modules });
-    navigate('/dashboard/courses');
+    if (!basics.title || !basics.price) {
+      alert("Title and Price are required.");
+      return;
+    }
+    
+    try {
+      await createCourse({
+        title: basics.title,
+        description: basics.description,
+        price: Number(basics.price) || 0,
+        thumbnailUrl: basics.thumbnail,
+        published: true, // Auto-publish for now
+      }).unwrap();
+      
+      navigate('/dashboard/courses');
+    } catch (err) {
+      console.error('Failed to create course:', err);
+      alert('Failed to publish course.');
+    }
   };
 
+  const totalLessons = modules.reduce((a, m) => a + m.lessons.length, 0);
+
+  const tabs = [
+    { id: 'basics' as const, label: 'Basic Details', icon: Layout },
+    { id: 'curriculum' as const, label: 'Curriculum', icon: ListVideo },
+    { id: 'settings' as const, label: 'Settings', icon: Settings2 },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20 font-sans selection:bg-violet-100 selection:text-violet-700">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-2xl border-b border-slate-100 px-8 py-4">
-        <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Button 
-              variant="outline" 
-              size="icon" 
+      <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100 px-6 py-3.5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate(-1)}
-              className="rounded-xl h-10 w-10 border-slate-100 hover:border-slate-200"
+              className="rounded-xl h-9 w-9 text-slate-500 hover:text-slate-900"
             >
-              <ArrowLeft className="w-4.5 h-4.5 text-slate-900" />
+              <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none mb-1">
-                {basics.title || 'New Course Architecture'}
+              <h1 className="text-sm font-bold text-slate-900 leading-none">
+                {basics.title || 'Create New Course'}
               </h1>
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-                  Live Builder Context
-                </p>
-              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Draft • {totalLessons} lesson{totalLessons !== 1 ? 's' : ''}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" className="rounded-xl px-5 h-10 font-bold text-xs text-slate-400 hover:text-slate-900 transition-all uppercase tracking-widest">
-              Discard Changes
-            </Button>
-            <Button 
-              onClick={handleSave}
-              className="bg-violet-600 hover:bg-violet-700 text-white font-bold px-6 h-10 rounded-xl shadow-xl shadow-violet-200 transition-all active:scale-[0.98]"
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              className="rounded-xl text-sm text-slate-500 hover:text-slate-700 font-medium"
+              onClick={() => navigate(-1)}
             >
-              <Save className="w-4 h-4 mr-2" />
-              DEPLOY COURSE
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isPublishing}
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-5 h-9 rounded-xl text-sm gap-2 shadow-md"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {isPublishing ? "Publishing..." : "Publish Course"}
             </Button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-14">
-        <div className="flex gap-20">
-          
-          {/* Industrial Navigation Sidebar */}
-          <aside className="w-64 shrink-0 flex flex-col gap-2 sticky top-30 h-fit">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-1">Navigation</p>
-            {[
-              { id: 'basics', label: 'Basic Config', icon: Layout },
-              { id: 'curriculum', label: 'Curriculum Builder', icon: ListVideo },
-              { id: 'settings', label: 'Global Parameters', icon: Settings2 }
-            ].map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={cn(
-                  "group w-full flex items-center justify-between px-5 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200",
-                  activeTab === tab.id 
-                    ? "bg-slate-900 text-white shadow-xl shadow-slate-300" 
-                    : "bg-white text-slate-400 hover:text-slate-900 border border-slate-50"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-violet-400" : "text-slate-300 group-hover:text-slate-900")} />
-                  {tab.label}
-                </div>
-                {activeTab === tab.id && <ChevronRight className="w-3.5 h-3.5 text-violet-400" />}
-              </button>
-            ))}
-
-            <div className="mt-8 p-6 rounded-2xl bg-violet-600 text-white shadow-xl shadow-violet-200 relative overflow-hidden">
-               <Globe className="absolute -right-6 -top-6 w-24 h-24 opacity-10 rotate-12" />
-               <p className="font-bold text-sm relative z-10 leading-tight">Need help building your course?</p>
-               <Button variant="outline" className="mt-4 w-full rounded-lg border-white/20 bg-white/10 hover:bg-white/20 text-[10px] font-bold uppercase tracking-widest text-white border-0 h-9">
-                 Read Guides
-               </Button>
-            </div>
-          </aside>
-
-          {/* Canvas Section */}
-          <div className="flex-1 max-w-4xl">
-            
-            {activeTab === 'basics' && (
-              <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="space-y-1">
-                  <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Foundation</h2>
-                  <p className="text-slate-400 font-semibold text-base">Define the core identity and enrollment details.</p>
-                </div>
-
-                <Card className="rounded-2xl border-none shadow-xl shadow-slate-200/50 bg-white overflow-hidden p-10">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      <div className="space-y-6">
-                         <div className="space-y-2">
-                            <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Course Title</Label>
-                            <Input 
-                              value={basics.title}
-                              onChange={e => setBasics({...basics, title: e.target.value})}
-                              placeholder="e.g. Quantitative Market Analysis"
-                              className="h-14 rounded-xl border-slate-100 bg-slate-50 focus:bg-white focus:ring-violet-600/10 font-bold text-base px-6 transition-all"
-                            />
-                         </div>
-                         <div className="space-y-2">
-                            <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Enrollment Price (INR)</Label>
-                            <div className="relative">
-                               <span className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400 text-lg">₹</span>
-                               <Input 
-                                 type="number"
-                                 value={basics.price}
-                                 onChange={e => setBasics({...basics, price: e.target.value})}
-                                 placeholder="9,999"
-                                 className="h-14 pl-12 rounded-xl border-slate-100 bg-slate-50 focus:bg-white font-bold text-xl transition-all"
-                               />
-                            </div>
-                         </div>
-                         <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Category</Label>
-                              <Select onValueChange={v => setBasics({...basics, category: v})}>
-                                <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold px-6">
-                                  <SelectValue placeholder="Industry" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl p-2 border-slate-100 shadow-xl">
-                                  {["Tech Analysis", "Derivatives", "Crypto", "Stocks"].map(c => (
-                                    <SelectItem key={c} value={c} className="rounded-lg font-bold py-3">{c}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Target Level</Label>
-                              <Select defaultValue="Beginner" onValueChange={v => setBasics({...basics, level: v})}>
-                                <SelectTrigger className="h-12 rounded-xl border-slate-100 bg-slate-50 font-bold px-6">
-                                  <SelectValue placeholder="Level" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl p-2 border-slate-100 shadow-xl">
-                                  {["Beginner", "Intermediate", "Advanced"].map(l => (
-                                    <SelectItem key={l} value={l} className="rounded-lg font-bold py-3">{l}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                         </div>
-                      </div>
-
-                      <div className="space-y-6">
-                         <div className="space-y-2">
-                            <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Thumbnail Cover</Label>
-                            <div className="aspect-video rounded-xl border-2 border-dashed border-slate-100 bg-slate-50/50 flex flex-col items-center justify-center p-6 text-center group hover:bg-slate-100/50 hover:border-slate-200 transition-all cursor-pointer">
-                               <div className="w-12 h-12 rounded-2xl bg-white shadow-lg flex items-center justify-center text-slate-400 mb-3 transition-transform group-hover:scale-105">
-                                  <ImageIcon className="w-5 h-5" />
-                               </div>
-                               <p className="font-bold text-xs text-slate-900 uppercase tracking-widest leading-relaxed">System Dropzone</p>
-                               <p className="text-[10px] font-semibold text-slate-400 mt-1 uppercase tracking-tight">16:9 • High Precision</p>
-                            </div>
-                         </div>
-                         <div className="space-y-2">
-                            <Label className="uppercase text-[10px] font-bold tracking-widest text-slate-400 pl-1">Executive Summary</Label>
-                            <Textarea 
-                               value={basics.description}
-                               onChange={e => setBasics({...basics, description: e.target.value})}
-                               placeholder="Draft a compelling course description..."
-                               className="min-h-[100px] rounded-xl border-slate-100 bg-slate-50 focus:bg-white p-5 font-semibold text-sm leading-relaxed transition-all"
-                            />
-                         </div>
-                      </div>
-                   </div>
-                </Card>
-              </div>
-            )}
-
-            {activeTab === 'curriculum' && (
-              <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
-                <div className="flex items-end justify-between px-2">
-                  <div className="space-y-1">
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Syllabus Builder</h2>
-                    <p className="text-slate-400 font-semibold text-base">Assemble modules and lessons into a logic flow.</p>
-                  </div>
-                  <Button 
-                    onClick={addModule}
-                    className="rounded-xl bg-violet-600 text-white hover:bg-violet-700 font-bold text-[10px] uppercase tracking-widest h-12 px-6 shadow-xl shadow-violet-200 border-none transition-all active:scale-95"
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="flex gap-8">
+          {/* Sidebar nav */}
+          <aside className="w-56 shrink-0 hidden md:block">
+            <div className="sticky top-20 space-y-1.5">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-3 mb-2">
+                Steps
+              </p>
+              {tabs.map((tab, i) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
+                    activeTab === tab.id
+                      ? 'bg-slate-900 text-white shadow-md'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'h-6 w-6 rounded-lg flex items-center justify-center text-xs font-bold',
+                      activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-400'
+                    )}
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    NEW MODULE
-                  </Button>
-                </div>
+                    {i + 1}
+                  </div>
+                  {tab.label}
+                </button>
+              ))}
 
-                <div className="space-y-6">
-                  {modules.map((m, mIdx) => (
-                    <Card key={m.id} className="rounded-2xl border-none shadow-xl shadow-slate-200/50 bg-white overflow-hidden">
-                      <div className="bg-slate-950 px-8 py-5 flex items-center justify-between">
-                        <div className="flex items-center gap-5 flex-1">
-                          <div className="w-8 h-8 rounded-lg bg-white/10 text-violet-400 flex items-center justify-center font-bold text-xs">
-                             {mIdx + 1}
-                          </div>
-                          <Input 
-                            value={m.title}
-                            onChange={e => updateModuleTitle(m.id, e.target.value)}
-                            className="bg-transparent border-none text-white font-bold text-lg focus:ring-0 p-0 h-auto placeholder:text-slate-700"
-                            placeholder="Module Title"
-                          />
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => deleteModule(m.id)}
-                          className="h-8 w-8 text-slate-600 hover:text-red-500 hover:bg-white/5 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      
-                      <CardContent className="p-10 space-y-6">
-                        {/* <Accordion type="multiple" className="space-y-4">
-                          {m.lessons.map((l, lIdx) => (
-                            <AccordionItem key={l.id} value={l.id} className="border-none">
-                              <div className="bg-slate-50/80 rounded-[1.5rem] overflow-hidden group hover:shadow-lg transition-all duration-300">
-                                <div className="flex items-center gap-2 pr-4">
-                                  <AccordionTrigger className="flex-1 py-4 px-6 hover:no-underline">
-                                    <div className="flex items-center gap-6 w-full text-left">
-                                      <span className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-[11px] font-black text-slate-400 group-hover:text-violet-600 transition-colors">
-                                        {(lIdx + 1).toString().padStart(2, '0')}
-                                      </span>
-                                      <div className="flex flex-col gap-1">
-                                        <p className="font-black text-slate-900 text-sm tracking-tight leading-none group-hover:text-violet-700 transition-colors">
-                                          {l.title || 'Untitled Lesson'}
-                                        </p>
-                                        <div className="flex items-center gap-3">
-                                           <div className="flex items-center gap-1.5 text-[9px] font-bold text-slate-400 uppercase tracking-widest bg-white rounded-md px-2 py-0.5 shadow-sm">
-                                              <MonitorPlay className="w-3 h-3 text-violet-500" />
-                                              VID
-                                           </div>
-                                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{l.duration || '00:00'} min</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </AccordionTrigger>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteLesson(m.id, l.id);
-                                    }}
-                                    className="text-slate-300 hover:text-red-500 rounded-xl transition-colors"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                                <AccordionContent className="px-8 pb-8 pt-2">
-                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-white rounded-[2rem] shadow-inner shadow-slate-100 border border-slate-50">
-                                      <div className="space-y-5">
-                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Lesson Headline</Label>
-                                            <Input 
-                                              value={l.title}
-                                              onChange={e => updateLesson(m.id, l.id, { title: e.target.value })}
-                                              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
-                                            />
-                                         </div>
-                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Duration Profile</Label>
-                                            <Input 
-                                              value={l.duration}
-                                              onChange={e => updateLesson(m.id, l.id, { duration: e.target.value })}
-                                              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
-                                            />
-                                         </div>
-                                      </div>
-                                      <div className="space-y-5">
-                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Digital Asset URL (Vimeo/YT)</Label>
-                                            <Input 
-                                              value={l.videoUrl}
-                                              onChange={e => updateLesson(m.id, l.id, { videoUrl: e.target.value })}
-                                              placeholder="https://cloud.vimeo.com/video/..."
-                                              className="h-12 rounded-xl bg-slate-50 border-none font-bold"
-                                            />
-                                         </div>
-                                         <div className="space-y-2">
-                                            <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Intellectual Context</Label>
-                                            <Textarea 
-                                              value={l.description}
-                                              onChange={e => updateLesson(m.id, l.id, { description: e.target.value })}
-                                              placeholder="Summarize the core takeaways..."
-                                              className="min-h-[80px] rounded-xl bg-slate-50 border-none font-medium text-xs leading-relaxed"
-                                            />
-                                         </div>
-                                      </div>
-                                   </div>
-                                </AccordionContent>
-                              </div>
-                            </AccordionItem>
-                          ))}
-                        </Accordion> */}
-
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => addLesson(m.id)}
-                          className="w-full h-16 border-2 border-dashed border-slate-100 rounded-[1.5rem] hover:bg-slate-50 hover:border-violet-200 hover:text-violet-600 transition-all font-black text-[11px] tracking-[0.2em] text-slate-300 group"
-                        >
-                          <Plus className="w-4 h-4 mr-2 group-hover:scale-125 transition-transform" />
-                          APPEND LESSON UNIT
-                        </Button>
-                      </CardContent>
-                    </Card>
+              {/* Progress indicator */}
+              <div className="mt-6 p-4 rounded-xl bg-slate-100/80">
+                <p className="text-xs font-semibold text-slate-700 mb-2">Completion</p>
+                <div className="space-y-1.5">
+                  {[
+                    { label: 'Title', done: !!basics.title },
+                    { label: 'Category', done: !!basics.category },
+                    { label: 'Price', done: !!basics.price },
+                    { label: 'Description', done: !!basics.description },
+                    { label: 'Modules', done: modules.length > 0 },
+                    { label: 'Lessons', done: totalLessons > 0 },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-2 text-[11px]">
+                      <div
+                        className={cn(
+                          'w-1.5 h-1.5 rounded-full',
+                          item.done ? 'bg-emerald-500' : 'bg-slate-300'
+                        )}
+                      />
+                      <span className={item.done ? 'text-slate-700' : 'text-slate-400'}>
+                        {item.label}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
+            </div>
+          </aside>
+
+          {/* Main canvas */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile tab bar */}
+            <div className="flex md:hidden mb-6 bg-slate-100 rounded-xl p-1 gap-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    'flex-1 py-2 rounded-lg text-xs font-semibold transition-all',
+                    activeTab === tab.id
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500'
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* BASICS TAB */}
+            {activeTab === 'basics' && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Basic Details</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    Set up the core information for your course.
+                  </p>
+                </div>
+
+                <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm">
+                  <CardContent className="p-6 space-y-5">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Course Title</Label>
+                      <Input
+                        value={basics.title}
+                        onChange={(e) => setBasics({ ...basics, title: e.target.value })}
+                        placeholder="e.g. Options Trading Masterclass"
+                        className="h-11 rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white text-sm font-medium"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-slate-700">Category</Label>
+                        <Select onValueChange={(v) => setBasics({ ...basics, category: v })}>
+                          <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50/50 text-sm">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            {['Technical Analysis', 'Options & Derivatives', 'Crypto', 'Price Action', 'Day Trading', 'Risk Management'].map(
+                              (c) => (
+                                <SelectItem key={c} value={c} className="rounded-lg">
+                                  {c}
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-slate-700">Difficulty Level</Label>
+                        <Select
+                          defaultValue="Beginner"
+                          onValueChange={(v) => setBasics({ ...basics, level: v })}
+                        >
+                          <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50/50 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            {['Beginner', 'Intermediate', 'Advanced'].map((l) => (
+                              <SelectItem key={l} value={l} className="rounded-lg">
+                                {l}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium text-slate-700">Price (₹)</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">
+                            ₹
+                          </span>
+                          <Input
+                            type="number"
+                            value={basics.price}
+                            onChange={(e) => setBasics({ ...basics, price: e.target.value })}
+                            placeholder="4,999"
+                            className="h-11 pl-7 rounded-xl border-slate-200 bg-slate-50/50 text-sm font-medium"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Course Description</Label>
+                      <Textarea
+                        value={basics.description}
+                        onChange={(e) => setBasics({ ...basics, description: e.target.value })}
+                        placeholder="Describe what students will learn, the target audience, and key outcomes..."
+                        className="min-h-[120px] rounded-xl border-slate-200 bg-slate-50/50 focus:bg-white text-sm leading-relaxed"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-700">Thumbnail Image</Label>
+                      <div className="aspect-video rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-slate-100/50 hover:border-slate-300 transition-all group">
+                        <div className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-violet-500 group-hover:scale-105 transition-all mb-3">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-600">
+                          Click to upload or drag & drop
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          Recommended: 1280×720px (16:9 ratio)
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => setActiveTab('curriculum')}
+                    className="rounded-xl bg-slate-900 hover:bg-slate-800 text-sm font-semibold px-5 gap-2"
+                  >
+                    Next: Add Curriculum
+                    <ChevronDown className="w-3.5 h-3.5 rotate-[-90deg]" />
+                  </Button>
+                </div>
+              </motion.div>
             )}
 
-            {activeTab === 'settings' && (
-              <div className="space-y-12 animate-in fade-in slide-in-from-right-8 duration-700">
-                <div className="space-y-2">
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Global Parameters</h2>
-                  <p className="text-slate-400 font-medium text-lg">System-level configuration for distribution.</p>
+            {/* CURRICULUM TAB */}
+            {activeTab === 'curriculum' && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div className="flex items-end justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">Curriculum Builder</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                      Organize your content into modules and lessons.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={addModule}
+                    className="rounded-xl bg-slate-900 hover:bg-slate-800 text-sm font-semibold h-9 px-4 gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Module
+                  </Button>
                 </div>
-                <Card className="rounded-[3rem] border-none shadow-2xl shadow-slate-200 bg-white overflow-hidden p-12">
-                   <p className="font-bold text-slate-400">Settings canvas initialized. Additional configurations coming soon.</p>
+
+                <div className="space-y-4">
+                  {modules.map((m, mIdx) => (
+                    <Card
+                      key={m.id}
+                      className="rounded-2xl border-slate-200/80 bg-white shadow-sm overflow-hidden"
+                    >
+                      {/* Module header */}
+                      <div
+                        className="flex items-center gap-3 px-5 py-4 bg-slate-50/80 border-b border-slate-100 cursor-pointer"
+                        onClick={() => toggleModuleExpand(m.id)}
+                      >
+                        <GripVertical className="w-4 h-4 text-slate-300" />
+                        <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-bold">
+                          {mIdx + 1}
+                        </div>
+                        <Input
+                          value={m.title}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            updateModuleTitle(m.id, e.target.value);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex-1 bg-transparent border-none shadow-none font-semibold text-sm text-slate-900 p-0 h-auto focus-visible:ring-0"
+                          placeholder="Module Title"
+                        />
+                        <Badge variant="secondary" className="rounded-lg text-[10px] font-semibold">
+                          {m.lessons.length} lesson{m.lessons.length !== 1 ? 's' : ''}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteModule(m.id);
+                          }}
+                          className="h-7 w-7 rounded-lg text-slate-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                        {m.expanded ? (
+                          <ChevronUp className="w-4 h-4 text-slate-400" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-slate-400" />
+                        )}
+                      </div>
+
+                      {/* Lessons */}
+                      {m.expanded && (
+                        <CardContent className="p-5 space-y-3">
+                          {m.lessons.map((l, lIdx) => (
+                            <div
+                              key={l.id}
+                              className="rounded-xl bg-slate-50/70 border border-slate-100 p-4 space-y-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded-md bg-white border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
+                                  {lIdx + 1}
+                                </span>
+                                <Input
+                                  value={l.title}
+                                  onChange={(e) =>
+                                    updateLesson(m.id, l.id, { title: e.target.value })
+                                  }
+                                  className="flex-1 bg-white border-slate-200 rounded-lg h-9 text-sm font-medium"
+                                  placeholder="Lesson title"
+                                />
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                  <Input
+                                    value={l.duration}
+                                    onChange={(e) =>
+                                      updateLesson(m.id, l.id, { duration: e.target.value })
+                                    }
+                                    className="w-20 bg-white border-slate-200 rounded-lg h-9 text-xs text-center"
+                                    placeholder="mm:ss"
+                                  />
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => deleteLesson(m.id, l.id)}
+                                  className="h-8 w-8 rounded-lg text-slate-400 hover:text-red-500 shrink-0"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pl-9">
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-medium text-slate-500">
+                                    Video URL
+                                  </Label>
+                                  <Input
+                                    value={l.videoUrl}
+                                    onChange={(e) =>
+                                      updateLesson(m.id, l.id, { videoUrl: e.target.value })
+                                    }
+                                    placeholder="https://vimeo.com/..."
+                                    className="bg-white border-slate-200 rounded-lg h-8 text-xs"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label className="text-[10px] font-medium text-slate-500">
+                                    Description
+                                  </Label>
+                                  <Input
+                                    value={l.description}
+                                    onChange={(e) =>
+                                      updateLesson(m.id, l.id, { description: e.target.value })
+                                    }
+                                    placeholder="Brief summary of this lesson..."
+                                    className="bg-white border-slate-200 rounded-lg h-8 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+
+                          <button
+                            onClick={() => addLesson(m.id)}
+                            className="w-full py-3 border-2 border-dashed border-slate-200 rounded-xl text-sm font-medium text-slate-400 hover:text-violet-600 hover:border-violet-200 hover:bg-violet-50/30 transition-all flex items-center justify-center gap-2"
+                          >
+                            <Plus className="w-4 h-4" />
+                            Add Lesson
+                          </button>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('basics')}
+                    className="rounded-xl text-sm font-medium"
+                  >
+                    ← Back
+                  </Button>
+                  <Button
+                    onClick={() => setActiveTab('settings')}
+                    className="rounded-xl bg-slate-900 hover:bg-slate-800 text-sm font-semibold px-5 gap-2"
+                  >
+                    Next: Settings
+                    <ChevronDown className="w-3.5 h-3.5 rotate-[-90deg]" />
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* SETTINGS TAB */}
+            {activeTab === 'settings' && (
+              <motion.div
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Course Settings</h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    Configure enrollment, visibility, and access settings.
+                  </p>
+                </div>
+
+                <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm">
+                  <CardContent className="p-6 space-y-5">
+                    <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Enable Enrollment
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Allow students to enroll in this course
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 text-violet-600 rounded bg-slate-100 border-slate-300"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Certificate on Completion
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Issue certificates when students finish all lessons
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 text-violet-600 rounded bg-slate-100 border-slate-300"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">
+                          Show in Public Catalog
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Make this course visible to all visitors
+                        </p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        defaultChecked
+                        className="w-4 h-4 text-violet-600 rounded bg-slate-100 border-slate-300"
+                      />
+                    </div>
+                  </CardContent>
                 </Card>
-              </div>
+
+                {/* Summary */}
+                <Card className="rounded-2xl border-slate-200/80 bg-white shadow-sm">
+                  <CardContent className="p-6">
+                    <h3 className="text-sm font-semibold text-slate-900 mb-3">
+                      Course Summary
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-3 rounded-xl bg-slate-50">
+                        <p className="text-lg font-bold text-slate-900">{modules.length}</p>
+                        <p className="text-[11px] text-slate-500">Modules</p>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-slate-50">
+                        <p className="text-lg font-bold text-slate-900">{totalLessons}</p>
+                        <p className="text-[11px] text-slate-500">Lessons</p>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-slate-50">
+                        <p className="text-lg font-bold text-slate-900">
+                          {basics.price ? `₹${Number(basics.price).toLocaleString('en-IN')}` : '—'}
+                        </p>
+                        <p className="text-[11px] text-slate-500">Price</p>
+                      </div>
+                      <div className="text-center p-3 rounded-xl bg-slate-50">
+                        <p className="text-lg font-bold text-slate-900">{basics.level}</p>
+                        <p className="text-[11px] text-slate-500">Level</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-between">
+                  <Button
+                    variant="outline"
+                    onClick={() => setActiveTab('curriculum')}
+                    className="rounded-xl text-sm font-medium"
+                  >
+                    ← Back
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={isPublishing}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 rounded-xl text-sm gap-2 shadow-md"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    {isPublishing ? "Publishing..." : "Publish Course"}
+                  </Button>
+                </div>
+              </motion.div>
             )}
           </div>
         </div>

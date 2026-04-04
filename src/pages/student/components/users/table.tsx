@@ -1,16 +1,10 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Award } from "lucide-react";
 import { cn } from "@/lib/utils";
-
 import { TableActions } from "./actions";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef, PaginationState, OnChangeFn } from "@tanstack/react-table";
+
 export type StudentStatus = 'Active' | 'Warning' | 'Suspended';
 
 export interface Student {
@@ -24,98 +18,128 @@ export interface Student {
 }
 
 interface StudentTableProps {
-  students: Student[];
+  students: any[];
+  pagination: PaginationState;
+  onPaginationChange: OnChangeFn<PaginationState>;
+  pageCount: number;
 }
 
-export function StudentTable({ students }: StudentTableProps) {
-  const getStatusStyles = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "bg-zinc-900 text-white border-transparent";
-      case "Warning":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      default:
-        return "bg-zinc-100 text-zinc-500 border-zinc-200";
-    }
-  };
+const getStatusStyles = (status: string) => {
+  switch (status) {
+    case "Active":
+      return "bg-zinc-900 text-white border-transparent";
+    case "Warning":
+      return "bg-amber-100 text-amber-700 border-amber-200";
+    default:
+      return "bg-zinc-100 text-zinc-500 border-zinc-200";
+  }
+};
+
+export function StudentTable({ students, pagination, onPaginationChange, pageCount }: StudentTableProps) {
+
+  // Map API elements to Table Data format dynamically
+  const mappedStudents = students.map((s: any) => ({
+    id: s.id,
+    name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || 'Unknown User',
+    email: s.email,
+    initials: (s.firstName?.[0] || '') + (s.lastName?.[0] || '') || 'U',
+    rank: 'Standard',
+    courses: s.courses?.map((c: any) => c.title || c) || [],
+    status: s.status || 'Active'
+  }));
+
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "name",
+      header: "Student",
+      cell: ({ row }) => {
+        const student = row.original;
+        return (
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-zinc-100 flex items-center justify-center text-zinc-700 font-medium text-[11px]">
+              {student.initials}
+            </div>
+            <div>
+              <p className="text-zinc-900 font-medium text-[13px]">{student.name}</p>
+              <p className="text-zinc-400 text-[11px]">{student.id.split('-')[0]}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "rank",
+      header: "Rank",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1.5">
+          <Award className="w-3.5 h-3.5 text-amber-500" />
+          <span className="text-zinc-600 font-medium text-[11px] uppercase tracking-wide">
+            {row.getValue("rank")}
+          </span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "courses",
+      header: "Courses",
+      cell: ({ row }) => {
+        const courses = row.getValue("courses") as string[];
+        if (!courses || courses.length === 0) return <span className="text-zinc-400 text-xs">No courses</span>;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {courses.slice(0, 2).map((course: string) => (
+              <Badge 
+                key={course} 
+                variant="secondary" 
+                className="bg-zinc-100 text-zinc-600 border-transparent text-[10px] font-medium px-1.5 py-0"
+              >
+                {course}
+              </Badge>
+            ))}
+            {courses.length > 2 && (
+              <Badge variant="secondary" className="bg-zinc-100 text-zinc-600 border-transparent text-[10px] font-medium px-1.5 py-0">
+                +{courses.length - 2}
+              </Badge>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge className={cn(getStatusStyles(status), "border rounded-md px-2 py-0.5 text-[10px] font-medium shadow-none")}>
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => (
+        <div className="text-right">
+          <TableActions 
+            studentId={row.original.id}
+            onEdit={(id) => console.log('Edit', id)}
+            onQuickAction={(id) => console.log('Quick', id)}
+            onBlock={(id) => console.log('Block', id)}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <Table>
-        <TableHeader className="bg-zinc-50/80">
-          <TableRow className="hover:bg-transparent border-zinc-100">
-            <TableHead>Student</TableHead>
-            <TableHead>Rank</TableHead>
-            <TableHead>Courses</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {students.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-zinc-500">
-                No students found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            students.map((student) => (
-              <TableRow 
-                key={student.id} 
-                className="group border-zinc-100"
-              >
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-md bg-zinc-100 flex items-center justify-center text-zinc-700 font-medium text-[11px]">
-                      {student.initials}
-                    </div>
-                    <div>
-                      <p className="text-zinc-900 font-medium text-[13px]">{student.name}</p>
-                      <p className="text-zinc-400 text-[11px]">{student.id}</p>
-                    </div>
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <div className="flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-zinc-600 font-medium text-[11px] uppercase tracking-wide">
-                      {student.rank}
-                    </span>
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {student.courses.map((course) => (
-                      <Badge 
-                        key={course} 
-                        variant="secondary" 
-                        className="bg-zinc-100 text-zinc-600 border-transparent text-[10px] font-medium px-1.5 py-0"
-                      >
-                        {course}
-                      </Badge>
-                    ))}
-                  </div>
-                </TableCell>
-
-                <TableCell>
-                  <Badge className={cn(getStatusStyles(student.status), "border rounded-md px-2 py-0.5 text-[10px] font-medium shadow-none")}>
-                    {student.status}
-                  </Badge>
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <TableActions 
-                    studentId={student.id}
-                    onEdit={(id) => console.log('Edit', id)}
-                    onQuickAction={(id) => console.log('Quick', id)}
-                    onBlock={(id) => console.log('Block', id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+    <DataTable 
+      data={mappedStudents}
+      columns={columns}
+      pageCount={pageCount}
+      pagination={pagination}
+      onPaginationChange={onPaginationChange}
+    />
   );
 }

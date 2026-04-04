@@ -3,15 +3,34 @@ import { Search, Crown, BookOpen, TrendingUp, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { courses } from "../data/mockData"
 import { CourseCard } from "../components/CourseCard"
 import { useState } from "react"
+import { useGetCoursesQuery } from "@/api/apiSlice"
 
 export default function DashboardLearn() {
+  const { data: apiResponse, isLoading } = useGetCoursesQuery()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  const categories = Array.from(new Set(courses.map(c => c.category)))
+  const rawCourses = apiResponse?.data || []
+
+  // Mapping Backend courses to Component expected shape
+  const courses = rawCourses.map((c) => ({
+    id: c.id,
+    title: c.title,
+    description: c.description || 'No description available',
+    instructor: 'Instructor',
+    duration: c.durationHours ? `${c.durationHours}h` : 'TBD',
+    level: 'Beginner',
+    progress: 0,
+    lessons: [],
+    thumbnail: c.thumbnailUrl || "https://images.unsplash.com/photo-1610563166150-b34df4f3bcd6?auto=format&fit=crop&q=80&w=800",
+    category: 'General',
+    rating: 4.5,
+    students: c.enrollmentCount || 0
+  }))
+
+  const categories = Array.from(new Set(courses.map((c: any) => c.category)))
   
   const filteredCourses = courses.filter(course => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -112,7 +131,9 @@ export default function DashboardLearn() {
           </div>
         </div>
 
-        {filteredCourses.length === 0 ? (
+        {isLoading ? (
+          <div className="py-20 text-center text-slate-500">Loading your courses...</div>
+        ) : filteredCourses.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -21,7 +21,7 @@ export function CourseCard({ course, index = 0 }: CourseCardProps) {
       whileHover={{ y: -8 }}
       className="h-full"
     >
-      <Link to={`/dashboard/student/learn/course/${course.id}/lesson/${course.lessons[0].id}`}>
+      <Link to={course.lessons?.length > 0 ? `/dashboard/student/learn/course/${course.id}/lesson/${course.lessons[0].id}` : `/dashboard/courses/${course.id}`}>
         <Card className="overflow-hidden rounded-3xl border-2 hover:border-primary/50 transition-all duration-300 h-full flex flex-col group hover:shadow-xl">
           {/* Thumbnail with overlay */}
           <div className="aspect-video overflow-hidden relative">
@@ -96,7 +96,7 @@ export function CourseCard({ course, index = 0 }: CourseCardProps) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Play className="h-4 w-4" />
-                <span>{course.lessons.length} lessons</span>
+                <span>{course.lessons?.length || 0} lessons</span>
               </div>
             </div>
 

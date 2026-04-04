@@ -1,29 +1,26 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { RootState } from '../store/store'
 import type {
-  User,
-  UserRequest,
+  Page,
+  UserResponse,
+  CreateUserRequest,
   Organization,
   CreateOrganizationRequest,
-  Role,
-  CreateRoleRequest,
+  UpdateOrganizationRequest,
+  Student,
+  CreateStudentRequest,
+  Batch,
+  BatchRequest,
   Course,
-  CreateCourseRequest,
-  Lesson,
-  CreateLessonRequest,
-  Enrollment,
-  CreateEnrollmentRequest,
-  VideoProgress,
-  CreateVideoProgressRequest,
+  CourseRequest,
+  ApiResponse
 } from '../types/models'
 
-// Define a service using a base URL and expected endpoints
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
     prepareHeaders: (headers, { getState }) => {
-      // By default, if we have a token in the store, let's use it for all authenticated requests
       const token = (getState() as RootState).auth.token
       if (token) {
         headers.set('authorization', `Bearer ${token}`)
@@ -31,275 +28,293 @@ export const apiSlice = createApi({
       return headers
     },
   }),
-  tagTypes: ['User', 'Organization', 'Role', 'Course', 'Lesson', 'Enrollment', 'VideoProgress'],
+  tagTypes: ['User', 'Organization', 'Student', 'Batch', 'Course'],
   endpoints: (builder) => ({
-    // Users
-    getUsers: builder.query<User[], void>({
-      query: () => '/users',
+    // ---- Super Admin: Organizations ----
+    getOrganizations: builder.query<Page<Organization>, { pageIndex?: number; pageSize?: number } | void>({
+      query: (params) => {
+        const p = params || { pageIndex: 0, pageSize: 10 };
+        return `/superadmin/organizations?page=${p.pageIndex}&size=${p.pageSize}`;
+      },
       providesTags: (result) =>
-        result
+        result?.content
           ? [
-              ...result.map(({ id }) => ({ type: 'User' as const, id })),
-              { type: 'User', id: 'LIST' },
-            ]
-          : [{ type: 'User', id: 'LIST' }],
-    }),
-    getUser: builder.query<User, string>({
-      query: (id) => `/users/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'User', id }],
-    }),
-    createUser: builder.mutation<User, UserRequest>({
-      query: (body) => ({
-        url: '/users',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
-    }),
-    updateUser: builder.mutation<User, { id: string; data: UserRequest }>({
-      query: ({ id, data }) => ({
-        url: `/users/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'User', id }],
-    }),
-    deleteUser: builder.mutation<void, string>({
-      query: (id) => ({
-        url: `/users/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: (_result, _error, id) => [{ type: 'User', id }, { type: 'User', id: 'LIST' }],
-    }),
-
-    // Organizations
-    getOrganizations: builder.query<Organization[], void>({
-      query: () => '/organizations',
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.map(({ id }) => ({ type: 'Organization' as const, id })),
+              ...result.content.map(({ id }) => ({ type: 'Organization' as const, id })),
               { type: 'Organization', id: 'LIST' },
             ]
           : [{ type: 'Organization', id: 'LIST' }],
     }),
     getOrganization: builder.query<Organization, string>({
-      query: (id) => `/organizations/${id}`,
+      query: (id) => `/superadmin/organizations/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Organization', id }],
     }),
     createOrganization: builder.mutation<Organization, CreateOrganizationRequest>({
       query: (body) => ({
-        url: '/organizations',
+        url: '/superadmin/organizations',
         method: 'POST',
         body,
       }),
+      async onQueryStarted(body, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getOrganizations', undefined, (draft) => {
+            if (draft?.content) {
+              draft.content.unshift({
+                id: `temp-${Date.now()}`,
+                name: body.name,
+                active: true,
+                createdAt: new Date().toISOString(),
+              });
+            }
+          })
+        )
+        try { await queryFulfilled } catch { patchResult.undo() }
+      },
       invalidatesTags: [{ type: 'Organization', id: 'LIST' }],
     }),
-    updateOrganization: builder.mutation<Organization, { id: string; data: CreateOrganizationRequest }>({
+    updateOrganization: builder.mutation<Organization, { id: string; data: UpdateOrganizationRequest }>({
       query: ({ id, data }) => ({
-        url: `/organizations/${id}`,
+        url: `/superadmin/organizations/${id}`,
         method: 'PUT',
         body: data,
       }),
+      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getOrganizations', undefined, (draft) => {
+            if (draft?.content) {
+              const idx = draft.content.findIndex(o => o.id === id);
+              if (idx !== -1) {
+                draft.content[idx] = { ...draft.content[idx], name: data.name, active: data.active };
+              }
+            }
+          })
+        )
+        try { await queryFulfilled } catch { patchResult.undo() }
+      },
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Organization', id }],
     }),
     deleteOrganization: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/organizations/${id}`,
+        url: `/superadmin/organizations/${id}`,
         method: 'DELETE',
       }),
       invalidatesTags: [{ type: 'Organization', id: 'LIST' }],
     }),
+    getPlatformAdmins: builder.query<Page<UserResponse>, void>({
+      query: () => '/superadmin/organizations/admins',
+    }),
 
-    // Roles
-    getRoles: builder.query<Role[], void>({
-      query: () => '/roles',
+    // ---- Org Admin: Users ----
+    getUsers: builder.query<Page<UserResponse>, { pageIndex?: number; pageSize?: number } | void>({
+      query: (params) => {
+        const p = params || { pageIndex: 0, pageSize: 10 };
+        return `/org/users?page=${p.pageIndex}&size=${p.pageSize}`;
+      },
       providesTags: (result) =>
-        result
+        result?.content
           ? [
-              ...result.map(({ id }) => ({ type: 'Role' as const, id })),
-              { type: 'Role', id: 'LIST' },
+              ...result.content.map(({ id }) => ({ type: 'User' as const, id })),
+              { type: 'User', id: 'LIST' },
             ]
-          : [{ type: 'Role', id: 'LIST' }],
+          : [{ type: 'User', id: 'LIST' }],
     }),
-    getRole: builder.query<Role, string>({
-      query: (id) => `/roles/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'Role', id }],
-    }),
-    createRole: builder.mutation<Role, CreateRoleRequest>({
+    createUser: builder.mutation<UserResponse, CreateUserRequest>({
       query: (body) => ({
-        url: '/roles',
+        url: '/org/users',
         method: 'POST',
         body,
       }),
-      invalidatesTags: [{ type: 'Role', id: 'LIST' }],
+      async onQueryStarted(body, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getUsers', undefined, (draft) => {
+            if (draft?.content) {
+              draft.content.unshift({
+                id: `temp-${Date.now()}`,
+                email: body.email,
+                firstName: body.firstName,
+                lastName: body.lastName,
+                roles: body.roles
+              });
+            }
+          })
+        )
+        try { await queryFulfilled } catch { patchResult.undo() }
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
     }),
-    updateRole: builder.mutation<Role, { id: string; data: CreateRoleRequest }>({
+
+    // ---- Admin: Students ----
+    getStudents: builder.query<ApiResponse<Student[]>, { pageIndex?: number; pageSize?: number } | void>({
+      query: (params) => {
+        const p = params || { pageIndex: 0, pageSize: 10 };
+        return `/admin/students?page=${p.pageIndex}&size=${p.pageSize}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Student' as const, id })),
+              { type: 'Student', id: 'LIST' },
+            ]
+          : [{ type: 'Student', id: 'LIST' }],
+    }),
+    getStudent: builder.query<Student, string>({
+      query: (id) => `/admin/students/${id}`,
+      providesTags: (_result, _error, id) => [{ type: 'Student', id }],
+    }),
+    createStudent: builder.mutation<ApiResponse<Student>, CreateStudentRequest>({
+      query: (body) => ({
+        url: '/admin/students',
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted(body, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData('getStudents', undefined, (draft) => {
+            if (draft?.data) {
+              draft.data.unshift({
+                id: `temp-${Date.now()}`,
+                email: body.email,
+                firstName: body.firstName,
+                lastName: body.lastName,
+                status: 'ACTIVE',
+              } as Student);
+            }
+          })
+        )
+        try { await queryFulfilled } catch { patchResult.undo() }
+      },
+      invalidatesTags: [{ type: 'Student', id: 'LIST' }],
+    }),
+    updateStudent: builder.mutation<ApiResponse<Student>, { id: string; data: CreateStudentRequest }>({
       query: ({ id, data }) => ({
-        url: `/roles/${id}`,
+        url: `/admin/students/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Role', id }],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Student', id }],
     }),
-    deleteRole: builder.mutation<void, string>({
+    deleteStudent: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/roles/${id}`,
+        url: `/admin/students/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [{ type: 'Role', id: 'LIST' }],
+      invalidatesTags: [{ type: 'Student', id: 'LIST' }],
     }),
 
-    // Courses
-    getCourses: builder.query<Course[], void>({
-      query: () => '/courses',
-      providesTags: ['Course'],
+    // ---- Admin: Batches ----
+    getBatches: builder.query<Batch[], void>({
+      query: () => '/admin/batches',
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: 'Batch' as const, id })),
+              { type: 'Batch', id: 'LIST' },
+            ]
+          : [{ type: 'Batch', id: 'LIST' }],
     }),
-    getCourse: builder.query<Course, string>({
+    createBatch: builder.mutation<Batch, BatchRequest>({
+      query: (body) => ({
+        url: '/admin/batches',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [{ type: 'Batch', id: 'LIST' }],
+    }),
+
+    // ---- Courses ----
+    // Public catalog: GET /api/courses — returns ApiResponse<Course[]>
+    getCourses: builder.query<ApiResponse<Course[]>, void>({
+      query: () => '/courses',
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Course' as const, id })),
+              { type: 'Course', id: 'LIST' },
+            ]
+          : [{ type: 'Course', id: 'LIST' }],
+    }),
+    // Admin catalog: GET /api/courses/admin — returns ApiResponse<Course[]>
+    getAdminCourses: builder.query<ApiResponse<Course[]>, void>({
+      query: () => '/courses/admin',
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Course' as const, id })),
+              { type: 'Course', id: 'LIST' },
+            ]
+          : [{ type: 'Course', id: 'LIST' }],
+    }),
+    // Single course: GET /api/courses/{id} — returns ApiResponse<Course>
+    getCourse: builder.query<ApiResponse<Course>, string>({
       query: (id) => `/courses/${id}`,
       providesTags: (_result, _error, id) => [{ type: 'Course', id }],
     }),
-    createCourse: builder.mutation<Course, CreateCourseRequest>({
+    // Student courses: GET /api/courses/student/my-courses
+    getStudentCourses: builder.query<ApiResponse<Course[]>, void>({
+      query: () => '/courses/student/my-courses',
+      providesTags: ['Course'],
+    }),
+    // Create: POST /api/courses — body: CourseRequest, response: ApiResponse<Course>
+    createCourse: builder.mutation<ApiResponse<Course>, CourseRequest>({
       query: (body) => ({
         url: '/courses',
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Course'],
+      invalidatesTags: [{ type: 'Course', id: 'LIST' }],
     }),
-    updateCourse: builder.mutation<Course, { id: string; data: CreateCourseRequest }>({
+    // Update: PUT /api/courses/{id}
+    updateCourse: builder.mutation<ApiResponse<Course>, { id: string; data: CourseRequest }>({
       query: ({ id, data }) => ({
         url: `/courses/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Course', id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Course', id },
+        { type: 'Course', id: 'LIST' },
+      ],
     }),
-    deleteCourse: builder.mutation<void, string>({
+    // Delete: DELETE /api/courses/{id} — may return 400 COURSE_HAS_ENROLLMENTS
+    deleteCourse: builder.mutation<ApiResponse<null>, string>({
       query: (id) => ({
         url: `/courses/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Course'],
-    }),
-
-    // Lessons
-    getLessons: builder.query<Lesson[], void>({
-      query: () => '/lessons',
-      providesTags: ['Lesson'],
-    }),
-    getLesson: builder.query<Lesson, string>({
-      query: (id) => `/lessons/${id}`,
-      providesTags: (_result, _error, id) => [{ type: 'Lesson', id }],
-    }),
-    createLesson: builder.mutation<Lesson, CreateLessonRequest>({
-      query: (body) => ({
-        url: '/lessons',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Lesson'],
-    }),
-    updateLesson: builder.mutation<Lesson, { id: string; data: CreateLessonRequest }>({
-      query: ({ id, data }) => ({
-        url: `/lessons/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Lesson', id }],
-    }),
-    deleteLesson: builder.mutation<void, string>({
-      query: (id) => ({
-        url: `/lessons/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Lesson'],
-    }),
-
-    // Enrollments
-    getEnrollments: builder.query<Enrollment[], void>({
-      query: () => '/enrollments',
-      providesTags: ['Enrollment'],
-    }),
-    createEnrollment: builder.mutation<Enrollment, CreateEnrollmentRequest>({
-      query: (body) => ({
-        url: '/enrollments',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Enrollment'],
-    }),
-    updateEnrollment: builder.mutation<Enrollment, { id: string; data: CreateEnrollmentRequest }>({
-      query: ({ id, data }) => ({
-        url: `/enrollments/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: ['Enrollment'],
-    }),
-    deleteEnrollment: builder.mutation<void, string>({
-      query: (id) => ({
-        url: `/enrollments/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Enrollment'],
-    }),
-
-    // Video Progress
-    getVideoProgress: builder.query<VideoProgress[], void>({
-      query: () => '/video-progress',
-      providesTags: ['VideoProgress'],
-    }),
-    createVideoProgress: builder.mutation<VideoProgress, CreateVideoProgressRequest>({
-      query: (body) => ({
-        url: '/video-progress',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['VideoProgress'],
-    }),
-    updateVideoProgress: builder.mutation<VideoProgress, { id: string; data: CreateVideoProgressRequest }>({
-      query: ({ id, data }) => ({
-        url: `/video-progress/${id}`,
-        method: 'PUT',
-        body: data,
-      }),
-      invalidatesTags: ['VideoProgress'],
+      invalidatesTags: [{ type: 'Course', id: 'LIST' }],
     }),
   }),
 })
 
 export const {
-  useGetUsersQuery,
-  useGetUserQuery,
-  useCreateUserMutation,
-  useUpdateUserMutation,
-  useDeleteUserMutation,
+  // Organizations
   useGetOrganizationsQuery,
   useGetOrganizationQuery,
   useCreateOrganizationMutation,
   useUpdateOrganizationMutation,
   useDeleteOrganizationMutation,
-  useGetRolesQuery,
-  useGetRoleQuery,
-  useCreateRoleMutation,
-  useUpdateRoleMutation,
-  useDeleteRoleMutation,
+  useGetPlatformAdminsQuery,
+  
+  // Users
+  useGetUsersQuery,
+  useCreateUserMutation,
+  
+  // Students
+  useGetStudentsQuery,
+  useGetStudentQuery,
+  useCreateStudentMutation,
+  useUpdateStudentMutation,
+  useDeleteStudentMutation,
+  
+  // Batches
+  useGetBatchesQuery,
+  useCreateBatchMutation,
+  
+  // Courses
   useGetCoursesQuery,
+  useGetAdminCoursesQuery,
   useGetCourseQuery,
+  useGetStudentCoursesQuery,
   useCreateCourseMutation,
   useUpdateCourseMutation,
   useDeleteCourseMutation,
-  useGetLessonsQuery,
-  useGetLessonQuery,
-  useCreateLessonMutation,
-  useUpdateLessonMutation,
-  useDeleteLessonMutation,
-  useGetEnrollmentsQuery,
-  useCreateEnrollmentMutation,
-  useUpdateEnrollmentMutation,
-  useDeleteEnrollmentMutation,
-  useGetVideoProgressQuery,
-  useCreateVideoProgressMutation,
-  useUpdateVideoProgressMutation,
 } = apiSlice

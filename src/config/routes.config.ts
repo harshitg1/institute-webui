@@ -131,21 +131,20 @@ export const routeConfig: RouteConfig[] = [
   {
     path: '/dashboard/super-admin',
     name: 'Super Admin',
-    component: DashboardHome,
+    component: lazy(() => import('@/features/dashboard/pages/SuperAdminDashboard')),
     layout: 'dashboard',
     requiredRoles: [UserRole.SUPER_ADMIN],
     showInNav: true,
     icon: 'shield',
-    children: [
-      {
-        path: 'orgs',
-        name: 'Organizations',
-        component: DashboardHome, // Placeholder
-        requiredPermissions: [Permission.ORG_MANAGE],
-        showInNav: true,
-        icon: 'business',
-      },
-    ],
+  },
+  {
+    path: '/dashboard/super-admin/orgs',
+    name: 'Organizations',
+    component: lazy(() => import('@/features/dashboard/pages/SuperAdminOrgs')),
+    requiredRoles: [UserRole.SUPER_ADMIN],
+    requiredPermissions: [Permission.ORG_MANAGE],
+    showInNav: true,
+    icon: 'business',
   },
   
   // Organization Admin Routes
@@ -154,7 +153,7 @@ export const routeConfig: RouteConfig[] = [
     name: 'Dashboard',
     component: DashboardHome,
     layout: 'dashboard',
-    requiredRoles: [UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN],
+    requiredRoles: [UserRole.ORG_ADMIN],
     showInNav: true,
     icon: 'dashboard',
   },
@@ -163,7 +162,7 @@ export const routeConfig: RouteConfig[] = [
     name: 'User Management',
     component: DashboardUsers,
     layout: 'dashboard',
-    requiredRoles: [UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN],
+    requiredRoles: [UserRole.ORG_ADMIN],
     requiredPermissions: [Permission.USER_READ],
     showInNav: true,
     icon: 'people',
@@ -173,7 +172,7 @@ export const routeConfig: RouteConfig[] = [
     name: 'Course Management',
     component: lazy(() => import('@/pages/course')),
     layout: 'dashboard',
-    requiredRoles: [UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN, UserRole.TUTOR],
+    requiredRoles: [UserRole.ORG_ADMIN, UserRole.TUTOR],
     requiredPermissions: [Permission.COURSE_CREATE, Permission.COURSE_VIEW],
     showInNav: true,
     icon: 'menu_book',
@@ -188,16 +187,15 @@ export const routeConfig: RouteConfig[] = [
     requiredRoles: [UserRole.TUTOR],
     showInNav: true,
     icon: 'school',
-    children: [
-      {
-        path: 'learn',
-        name: 'My Courses',
-        component: DashboardLearn,
-        requiredPermissions: [Permission.COURSE_CREATE],
-        showInNav: true,
-        icon: 'menu_book',
-      },
-    ],
+  },
+  {
+    path: '/dashboard/tutor/learn',
+    name: 'My Courses',
+    component: DashboardLearn,
+    requiredRoles: [UserRole.TUTOR],
+    requiredPermissions: [Permission.COURSE_CREATE],
+    showInNav: true,
+    icon: 'menu_book',
   },
   
   // Student Routes
@@ -209,23 +207,23 @@ export const routeConfig: RouteConfig[] = [
     requiredRoles: [UserRole.STUDENT],
     showInNav: true,
     icon: 'person',
-    children: [
-      {
-        path: 'learn',
-        name: 'My Learning',
-        component: DashboardLearn,
-        requiredPermissions: [Permission.COURSE_VIEW],
-        showInNav: true,
-        icon: 'auto_stories',
-      },
-      {
-        path: 'learn/course/:courseId/lesson/:lessonId',
-        name: 'Course Player',
-        component: CoursePlayer,
-        requiredPermissions: [Permission.COURSE_VIEW],
-        showInNav: false,
-      },
-    ],
+  },
+  {
+    path: '/dashboard/student/learn',
+    name: 'My Learning',
+    component: DashboardLearn,
+    requiredRoles: [UserRole.STUDENT],
+    requiredPermissions: [Permission.COURSE_VIEW],
+    showInNav: true,
+    icon: 'auto_stories',
+  },
+  {
+    path: '/dashboard/student/learn/course/:courseId/lesson/:lessonId',
+    name: 'Course Player',
+    component: CoursePlayer,
+    requiredRoles: [UserRole.STUDENT],
+    requiredPermissions: [Permission.COURSE_VIEW],
+    showInNav: false,
   },
 ]
 

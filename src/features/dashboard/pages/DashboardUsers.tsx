@@ -1,28 +1,29 @@
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { Plus, Search, Filter } from "lucide-react"
+import { Users as UsersIcon, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { UserDialog } from "../components/UserDialog"
-import { users as initialUsers } from "../data/mockData"
-import { UserTable } from "../components/UserTable"
+
+import { useGetUsersQuery } from "@/api/apiSlice"
+import { DataTable } from "@/components/ui/data-table"
+import type { ColumnDef, PaginationState } from "@tanstack/react-table"
 
 export default function DashboardUsers() {
-  const [users, setUsers] = useState(initialUsers)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  })
+
+  const { data: usersData, isLoading } = useGetUsersQuery({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize
+  })
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-  }
-
-  const filteredUsers = users.filter(
-    (user) =>
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const users = usersData?.content || []
+  const pageCount = usersData?.totalPages || 1
 
   const handleAddUser = () => {
     setSelectedUser(null)
@@ -34,28 +35,73 @@ export default function DashboardUsers() {
     setIsDialogOpen(true)
   }
 
-  const handleSaveUser = (user: any) => {
-    if (selectedUser) {
-      // Edit existing user
-      setUsers(users.map((u) => (u.id === user.id ? user : u)))
-    } else {
-      // Add new user
-      setUsers([...users, user])
-    }
-  }
-
-  const handleDeleteUser = (userId: string) => {
-    if (confirm("Are you sure you want to delete this user?")) {
-      setUsers(users.filter((u) => u.id !== userId))
-    }
-  }
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "name",
+      header: "User",
+      cell: ({ row }) => {
+        const user = row.original
+        const initials = `${(user.firstName?.[0] || user.email[0]).toUpperCase()}${(user.lastName?.[0] || '').toUpperCase()}`
+        return (
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-semibold text-sm">
+              {initials}
+            </div>
+            <div>
+              <div className="font-medium text-slate-900">{user.firstName} {user.lastName}</div>
+              <div className="text-sm text-slate-500">{user.email}</div>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "roles",
+      header: "Role",
+      cell: ({ row }) => {
+        const roles = row.getValue("roles") as string | string[]
+        const roleStr = Array.isArray(roles) ? roles.join(', ') : roles || 'Unknown'
+        return (
+          <Badge variant="secondary" className="font-medium">
+             {roleStr.replace('ROLE_', '')}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: "organizationId",
+      header: "Tenant Reference",
+      cell: ({ row }) => (
+        <span className="text-xs text-slate-400 font-mono">
+          {row.getValue("organizationId") || 'Global'}
+        </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Actions</div>,
+      cell: ({ row }) => {
+        const user = row.original
+        return (
+          <div className="text-right">
+            <Button variant="ghost" size="sm" onClick={() => handleEditUser(user)}>
+              Edit
+            </Button>
+          </div>
+        )
+      },
+    },
+  ]
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b pb-6">
         <div>
-          <h2 className="text-xl font-bold tracking-tight text-slate-900">User Management</h2>
-          <p className="text-sm text-slate-500">Manage users, roles, and permissions.</p>
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+            <UsersIcon className="w-6 h-6 text-violet-600" />
+            User Management
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">Manage tenant users, assign roles, and handle access control.</p>
         </div>
         <Button onClick={handleAddUser} className="rounded-xl h-10 px-5 text-[13.5px] font-bold">
           <Plus className="mr-2 h-4 w-4" />
@@ -63,43 +109,20 @@ export default function DashboardUsers() {
         </Button>
       </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="rounded-3xl border border-slate-200 bg-card text-card-foreground shadow-sm"
-      >
-        <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search users..."
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  className="w-full rounded-2xl pl-9 md:w-[300px]"
-                />
-              </div>
-              <Button variant="outline" size="icon" className="rounded-2xl">
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <UserTable
-            data={filteredUsers} 
-            onEdit={handleEditUser} 
-            onDelete={handleDeleteUser} 
-          />
-        </div>
-      </motion.div>
+      <DataTable 
+        columns={columns} 
+        data={users} 
+        pageCount={pageCount}
+        pagination={pagination}
+        onPaginationChange={setPagination}
+        isLoading={isLoading}
+      />
 
       <UserDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         user={selectedUser}
-        onSave={handleSaveUser}
+        onSave={() => setIsDialogOpen(false)}
       />
     </div>
   )

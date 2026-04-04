@@ -6,68 +6,45 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BatchManagement } from "./components/batches/BatchManagement";
 import { PageHeader, PageContainer, PageContent } from "@/components/ui/page-header";
-
-export type StudentStatus = 'Active' | 'Warning' | 'Suspended';
-
-export interface Student {
-  id: string;
-  name: string;
-  email: string;
-  initials: string;
-  rank: string;
-  courses: string[];
-  status: StudentStatus;
-}
-
-const MOCK_DATA: Student[] = [
-  {
-    id: "#921-F88",
-    name: "Jonathan Silver",
-    email: "jon@lavender.com",
-    initials: "JS",
-    rank: "Pro Elite",
-    courses: ["FX MASTERY", "CRYPTO LOGIC"],
-    status: "Active",
-  },
-  {
-    id: "#12A-744",
-    name: "Sarah Raines",
-    email: "sarah@lavender.com",
-    initials: "SR",
-    rank: "Intermediate",
-    courses: ["OPTIONS BETA"],
-    status: "Warning",
-  },
-  {
-    id: "#77E-092",
-    name: "Marcus Kael",
-    email: "marcus@lavender.com",
-    initials: "MK",
-    rank: "Novice",
-    courses: ["CHARTING 101", "PSYCHOLOGY"],
-    status: "Active",
-  }
-];
+import { useGetStudentsQuery, useCreateStudentMutation } from "@/api/apiSlice";
+import type { PaginationState } from "@tanstack/react-table";
 
 export default function Students() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [students, setStudents] = useState<Student[]>(MOCK_DATA);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  
+  const { data: response, isLoading } = useGetStudentsQuery({
+    pageIndex: pagination.pageIndex,
+    pageSize: pagination.pageSize
+  });
+  
+  const students = response?.data || [];
+  const pageCount = (response as any)?.totalPages || 1; // Fallback since ApiResponse might not have totalPages if it's not a Page
+
+  const [createStudent] = useCreateStudentMutation();
 
   const handleAddStudent = async (data: StudentFormData) => {
-    console.log('Adding student:', data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const newStudent: Student = {
-      id: `#${Math.random().toString(36).substring(2, 5).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
-      name: data.fullName,
-      email: data.email,
-      initials: data.fullName.split(' ').map(n => n[0]).join('').toUpperCase(),
-      rank: data.accessLevel === 'premium' ? 'Premium' : 'Standard',
-      courses: [data.course.toUpperCase()],
-      status: 'Active'
-    };
+    try {
+      const names = data.fullName.split(' ');
+      const firstName = names[0];
+      const lastName = names.slice(1).join(' ');
 
-    setStudents(prev => [newStudent, ...prev]);
+      await createStudent({
+        email: data.email,
+        firstName: firstName || 'Unknown',
+        lastName: lastName || '',
+        courseIds: data.course ? [data.course] : []
+        // Optional: Add batchId if provided
+      }).unwrap();
+      
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to create student", err);
+      alert("Failed to create student.");
+    }
   };
 
   return (
@@ -81,17 +58,17 @@ export default function Students() {
       {/* Tabs Section */}
       <Tabs defaultValue="batches" className="flex flex-col flex-1 min-h-0 mt-4">
         {/* Tab Navigation */}
-        <TabsList className="bg-white p-0.5 gap-0.5 h-auto rounded-md border border-zinc-200 w-fit">
+        <TabsList className="bg-slate-100 p-1 gap-1 h-auto rounded-xl w-fit">
           <TabsTrigger 
             value="batches" 
-            className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
+            className="rounded-lg px-3.5 py-2 text-[13px] font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all gap-1.5"
           >
             <Layers className="w-3.5 h-3.5" />
             Batches
           </TabsTrigger>
           <TabsTrigger 
             value="users" 
-            className="rounded px-3 py-1.5 text-[13px] font-medium text-zinc-500 hover:text-zinc-900 data-[state=active]:bg-zinc-900 data-[state=active]:text-white transition-all gap-1.5"
+            className="rounded-lg px-3.5 py-2 text-[13px] font-medium text-slate-500 hover:text-slate-900 data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm transition-all gap-1.5"
           >
             <Users className="w-3.5 h-3.5" />
             Students
@@ -110,15 +87,24 @@ export default function Students() {
               <h2 className="text-[15px] font-medium text-zinc-900">Students</h2>
               <p className="text-zinc-500 text-[12px] mt-0.5">View and manage individual students</p>
             </div>
-            <Button onClick={() => setIsModalOpen(true)} className="gap-1.5">
+            <Button onClick={() => setIsModalOpen(true)} className="gap-2 rounded-xl text-sm">
               <Plus className="w-4 h-4" />
               Add Student
             </Button>
           </div>
           
           <PageContent>
-            <div className="h-full overflow-y-auto rounded-lg border border-zinc-200 bg-white">
-              <StudentTable students={students} />
+            <div className="h-full overflow-y-auto rounded-xl border border-slate-200 bg-white">
+              {isLoading ? (
+                <div className="p-8 text-center text-zinc-500">Loading students...</div>
+              ) : (
+                <StudentTable 
+                  students={students} 
+                  pagination={pagination}
+                  onPaginationChange={setPagination}
+                  pageCount={pageCount}
+                />
+              )}
             </div>
           </PageContent>
 

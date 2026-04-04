@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BatchCard, type Batch } from './BatchCard';
 import { CreateBatchModal, type BatchFormData } from './CreateBatchModal';
 import { BatchAttendance } from './BatchAttendance';
+import { useGetBatchesQuery, useCreateBatchMutation } from '@/api/apiSlice';
 
 const MOCK_BATCHES: Batch[] = [
   {
@@ -50,10 +51,26 @@ const MOCK_BATCHES: Batch[] = [
 
 export function BatchManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [batches, setBatches] = useState<Batch[]>(MOCK_BATCHES);
+  const { data: apiBatches = [], isLoading } = useGetBatchesQuery();
+  const [createBatch] = useCreateBatchMutation();
   
   const [viewMode, setViewMode] = useState<'list' | 'attendance'>('list');
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
+
+  // Map API batches to Local UI Batch format
+  const batches: Batch[] = apiBatches.map((b: any) => ({
+    id: b.id,
+    name: b.name,
+    course: b.course?.title || 'Unknown Course',
+    level: 'L1: Core',
+    time: b.startTime && b.endTime ? `${b.startTime} - ${b.endTime}` : 'TBD',
+    days: b.duration || 'Flexible',
+    students: b.students?.length || 0,
+    capacity: 30, // Default for now
+    status: b.status || 'active',
+    actionLabel: 'LOG ATTENDANCE',
+    color: 'blue'
+  }));
 
   const handleActionClick = (batch: Batch) => {
     if (batch.status === 'active') {
@@ -69,21 +86,19 @@ export function BatchManagement() {
     setSelectedBatch(null);
   };
 
-  const handleCreateBatch = (data: BatchFormData) => {
-    const newBatch: Batch = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: data.batchName,
-      course: data.courseCategory === 'technical' ? 'Technical Analysis' : 'Advanced Trading',
-      level: 'L1: INIT',
-      time: `${data.startTime} - ${data.endTime}`,
-      days: data.scheduleDays.join(', '),
-      students: 0,
-      capacity: parseInt(data.maxCapacity) || 30,
-      status: 'upcoming',
-      actionLabel: 'VERIFY ROSTER',
-      color: 'amber'
-    };
-    setBatches(prev => [newBatch, ...prev]);
+  const handleCreateBatch = async (data: BatchFormData) => {
+    try {
+      await createBatch({
+        name: data.batchName,
+        duration: data.scheduleDays.join(', '),
+        startTime: data.startTime,
+        endTime: data.endTime,
+      }).unwrap();
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error("Failed to create batch", err);
+      alert("Failed to create batch.");
+    }
   };
 
   if (viewMode === 'attendance' && selectedBatch) {
@@ -111,13 +126,17 @@ export function BatchManagement() {
       <div className="flex-1 min-h-0 overflow-y-auto">
         {/* Batch Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {batches.map(batch => (
-            <BatchCard 
-              key={batch.id} 
-              batch={batch} 
-              onActionClick={handleActionClick}
-            />
-          ))}
+          {isLoading ? (
+            <div className="col-span-full py-10 text-center text-zinc-500">Loading batches...</div>
+          ) : (
+            batches.map(batch => (
+              <BatchCard 
+                key={batch.id} 
+                batch={batch} 
+                onActionClick={handleActionClick}
+              />
+            ))
+          )}
           
           {/* Quick Add Placeholder */}
           <div 
