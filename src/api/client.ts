@@ -1,9 +1,10 @@
 import axios from 'axios'
 import { store } from '../store/store'
 import { logout } from '../features/auth/authSlice' // Import your logout action
+import { API_BASE_URL } from '../config/api'
 
 export const client = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

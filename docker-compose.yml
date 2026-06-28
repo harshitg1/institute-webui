@@ -1,0 +1,16 @@
+services:
+  legacy-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: legacy-frontend
+    restart: always
+    ports:
+      - "8080:80"
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    external: true
+    name: web-network # Assumes a common network exists or can be created to link with the global Nginx container
